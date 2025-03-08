@@ -1,12 +1,23 @@
-# React + Vite
+# Game Arenas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A demo to demonstrate the theoretical concept of [Games](https://en.wikipedia.org/wiki/Parity_game).
+It mostly exists for me to practice the concept and try to gain a better intuition, as well as to try to visualize them.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## What are games?
 
-## Expanding the ESLint configuration
+Games are computational object that allow 2 participants to participate in a match, in which there is a winner.
+They are used to model reactive systems and other similar multi-agent activities. The games are infinite, which means they can model systems that dont nessecerily terminate.
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Definitions
+
+### Arena
+### Conditions
+### Strategies
+#### Positional Strategies
+### Types of games
+#### Reachability and Safety
+#### Buchi and co-Buchi
+#### Parity
+### Solving games
+#### Attractors
