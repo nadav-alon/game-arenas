@@ -22,6 +22,17 @@ Code defined in [here](src/games/arena.ts)
 
 A sub-arena $A|V'$ of $A$ is the arena defined by restricting $A$ to vertices in $V'$. It is only valid if every vertex in $V'$ has a successor vertex in $V'$.
 
+### Play
+A 'play' in the game of an arena is an infinite sequence of vertices, such that each subsequent vertex is a successor of the previous according to the arena.
+
+More formally:
+
+$p = p_{0}p_{1}...\in V^{\omega}$
+
+$(p_n, p_{n+1}) \in E \text{ for every } n \in \N$
+
+
+Of course in my implementation a play will be finite, and i choose an arbitrary number of steps for a play to end.
 
 ### Conditions
 ### Strategies

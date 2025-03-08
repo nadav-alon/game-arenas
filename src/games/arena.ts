@@ -1,6 +1,10 @@
-type Vertex = {v: string, p: 0|1}
+export type Vertex = {v: string, p: 0|1}
+export type SimpleVertex = string
+export type SimpleVertices = readonly string[]
+export type Edge = [string, string]
+export type Edges = readonly Edge[]
 
-class Arena<V extends readonly Vertex[] = [], E extends readonly [string, string][] = [], C extends boolean = false> {
+class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends boolean = false> {
     compiled: C
     vertices: V;
     edges: E;
@@ -85,12 +89,12 @@ class Arena<V extends readonly Vertex[] = [], E extends readonly [string, string
 }
 
 type NeighborsOf<
-  V extends string,
+  V extends SimpleVertex,
   Vertices extends readonly Vertex[],
-  Edges extends readonly [string, string][]
+  Edges_ extends Edges
 > =
   V extends Vertices[number]['v'] // Ensure Vertex exists in Vertices
-    ? Edges extends [[infer Source extends string, infer Target extends string], ...infer Rest extends [string, string][]]
+    ? Edges_ extends [[infer Source extends string, infer Target extends string], ...infer Rest extends Edges]
       ? V extends Source
         ? [Target, ...NeighborsOf<V, Vertices, Rest>]
         : NeighborsOf<V, Vertices, Rest>
@@ -112,12 +116,12 @@ type SpecificVertexOf<
 
 
 type SpecificVerticesOf<
-  V extends readonly string[],
+  V extends SimpleVertices,
   Vertices extends readonly Vertex[]> = 
   V extends [infer First, ...infer Rest]  
   ? First extends string ? 
   (
-  Rest extends readonly string[] ?
+  Rest extends SimpleVertices ?
   [SpecificVertexOf<First, Vertices>, ...SpecificVerticesOf<Rest, Vertices>] : 
   [SpecificVertexOf<First, Vertices>])
   : readonly []
@@ -126,16 +130,16 @@ type SpecificVerticesOf<
 
 type EdgesThatContainVertex<
   V extends string,
-  Edges extends readonly [string,string][],
+  Edges_ extends Edges,
   Position extends 0 | 1
   > = 
-  Edges extends [infer First, ...infer Rest]  
+  Edges_ extends [infer First, ...infer Rest]  
   ? First extends [string, string] ? 
   V extends First[Position] ?
-  Rest extends readonly [string, string][] ?
+  Rest extends Edges ?
   [First, ...EdgesThatContainVertex<V,Rest, Position>] 
   : [First] 
-  : Rest extends readonly [string, string][] ?
+  : Rest extends Edges ?
   [...EdgesThatContainVertex<V,Rest, Position>] 
   : readonly [] 
   : readonly [] 
@@ -143,20 +147,20 @@ type EdgesThatContainVertex<
 
 
 type EdgesThatContainVertices<
-  V extends readonly string[],
-  Edges extends readonly [string,string][],
+  V extends SimpleVertices,
+  Edges_ extends Edges,
   Position extends 0 | 1
   > = 
   V extends [infer First, ...infer Rest] ?
   First extends string ? 
-  Rest extends string[] ? 
-  [...EdgesThatContainVertex<First,Edges,Position>, ...EdgesThatContainVertices<Rest, Edges, Position>]
-  : [...EdgesThatContainVertex<First,Edges,Position>]
+  Rest extends SimpleVertices ? 
+  [...EdgesThatContainVertex<First,Edges_,Position>, ...EdgesThatContainVertices<Rest, Edges_, Position>]
+  : [...EdgesThatContainVertex<First,Edges_,Position>]
   : readonly []
   : readonly []
 
-type EdgesThatStartAndEndAtVertices<V extends readonly string[], Edges extends readonly [string, string][]> = 
-    EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges, 1>, 0>
+type EdgesThatStartAndEndAtVertices<V extends SimpleVertices, Edges_ extends Edges> = 
+    EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges_, 1>, 0>
 
 
 const a = new Arena().addP0('q1').addP1('q2').addEdge("q1","q2").addP0('q3').addEdge("q2","q1").addEdge("q2","q3").addEdge("q3","q1").compile()
