@@ -120,9 +120,11 @@ type EdgesThatContainVertex<
   Edges extends [infer First, ...infer Rest]  
   ? First extends [string, string] ? 
   V extends First[Position] ?
-  Rest extends [string, string][] ?
-  [First, ...EdgesThatContainVertex<V,Rest, Position>] :
-  [First] 
+  Rest extends readonly [string, string][] ?
+  [First, ...EdgesThatContainVertex<V,Rest, Position>] 
+  : [First] 
+  : Rest extends readonly [string, string][] ?
+  [...EdgesThatContainVertex<V,Rest, Position>] 
   : readonly [] 
   : readonly [] 
   : readonly [] 
@@ -150,4 +152,20 @@ const a = new Arena().addP0('q1').addP1('q2').addEdge("q1","q2").addP0('q3').add
 
 const aNeighbors = a.getNeighbors('q2')
 
-const subArena = a.subArena(['q1','q2'])
+type h = SpecificVerticesOf<['q1', 'q2'], typeof a.vertices>
+//   ^?
+type hh = EdgesThatStartAndEndAtVertices<['q1', 'q2'], typeof a.edges>
+//   ^?
+
+type xxx = EdgesThatContainVertex<'q2', typeof a.edges, 0>
+//   ^?
+type xxxx = EdgesThatContainVertex<'q2', typeof a.edges, 1>
+//   ^?
+
+type hhh = EdgesThatContainVertices<['q1', 'q2'], typeof a.edges, 0>
+//   ^?
+type hhhh = EdgesThatContainVertices<['q1', 'q2'], typeof a.edges, 1>
+//   ^?
+
+
+const subArena = a.subArena<['q1','q2']>(['q1','q2'])
