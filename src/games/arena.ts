@@ -50,13 +50,24 @@ class Arena<V extends readonly Vertex[] = [], E extends readonly [string, string
       return ret
     }
 
-
     get<Vert extends V[number]['v']>(vertex: Vert):SpecificVertexOf<Vert, V> {
       if (!this.compiled){
         return this.vertices.find(v=>v.v === vertex) as SpecificVertexOf<Vert, V>
       }
       
       return this.map.get(vertex) as SpecificVertexOf<Vert, V>
+    }
+
+    subArena<NewVert extends readonly V[number]['v'][]>(newV: NewVert): Arena<SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
+      const newVertices = this.vertices.filter(v=>newV.includes(v.v)) as SpecificVerticesOf<NewVert, V>
+      const newEdges = this.edges.filter(e=>newV.includes(e[0]) && newV.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
+
+      const ret = new Arena(newVertices, newEdges).compile()
+
+      // some new Vertex doesnt have a successor
+      if (newV.some(v=>ret.getNeighbors(v).length === 0)) throw new Error('Invalid sub-arena')
+
+      return ret
     }
 
 }
@@ -87,8 +98,56 @@ type SpecificVertexOf<
   : never
   : never 
 
-const hello = new Arena().addP0('q1').addP1('q2').addEdge("q1", "q2").addEdge("q1", 'q1').addEdge('q2', 'q2').compile()
 
-const x : 'q1' | 'q2' 
+type SpecificVerticesOf<
+  V extends readonly string[],
+  Vertices extends readonly Vertex[]> = 
+  V extends [infer First, ...infer Rest]  
+  ? First extends string ? 
+  (
+  Rest extends readonly string[] ?
+  [SpecificVertexOf<First, Vertices>, ...SpecificVerticesOf<Rest, Vertices>] : 
+  [SpecificVertexOf<First, Vertices>])
+  : readonly []
+  : readonly []
 
-const y = hello.get(x)
+
+type EdgesThatContainVertex<
+  V extends string,
+  Edges extends readonly [string,string][],
+  Position extends 0 | 1
+  > = 
+  Edges extends [infer First, ...infer Rest]  
+  ? First extends [string, string] ? 
+  V extends First[Position] ?
+  Rest extends [string, string][] ?
+  [First, ...EdgesThatContainVertex<V,Rest, Position>] :
+  [First] 
+  : readonly [] 
+  : readonly [] 
+  : readonly [] 
+
+
+type EdgesThatContainVertices<
+  V extends readonly string[],
+  Edges extends readonly [string,string][],
+  Position extends 0 | 1
+  > = 
+  V extends [infer First, ...infer Rest] ?
+  First extends string ? 
+  Rest extends string[] ? 
+  [...EdgesThatContainVertex<First,Edges,Position>, ...EdgesThatContainVertices<Rest, Edges, Position>]
+  : [...EdgesThatContainVertex<First,Edges,Position>]
+  : readonly []
+  : readonly []
+
+type EdgesThatStartAndEndAtVertices<V extends readonly string[], Edges extends readonly [string, string][]> = 
+    EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges, 1>, 0>
+
+
+const a = new Arena().addP0('q1').addP1('q2').addEdge("q1","q2").addP0('q3').addEdge("q2","q1").addEdge("q2","q3").addEdge("q3","q1").compile()
+
+
+const aNeighbors = a.getNeighbors('q2')
+
+const subArena = a.subArena(['q1','q2'])
