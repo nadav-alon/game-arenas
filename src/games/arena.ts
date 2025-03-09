@@ -1,10 +1,11 @@
-export type Vertex = {v: string, p: 0|1}
+export type Player = 0 | 1;
 export type SimpleVertex = string
-export type SimpleVertices = readonly string[]
-export type Edge = [string, string]
+export type Vertex = {v: SimpleVertex, p: Player}
+export type SimpleVertices = readonly SimpleVertex[]
+export type Edge = [SimpleVertex, SimpleVertex]
 export type Edges = readonly Edge[]
 
-class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends boolean = false> {
+export class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends boolean = false> {
     compiled: C
     vertices: V;
     edges: E;
@@ -14,20 +15,26 @@ class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends bo
         this.compiled = false as C
     }
 
+    /** returns new arena with the new vertex */
     add<NewV extends Vertex>(newVertex: NewV) {
       if (this.compiled) throw new Error('already compiled')
-        const ret = new Arena<[...V, NewV], E>([...this.vertices, newVertex], this.edges)
-        return ret
+      if (this.vertices.find(v=>v.v === newVertex.v)) throw new Error('Vertex already exists')
+
+      const ret = new Arena<[...V, NewV], E>([...this.vertices, newVertex], this.edges)
+      return ret
     }
 
+    /** returns new arena with a new p0 vertex */
     addP0<NewV extends string>(newVertex:NewV) {
       return this.add({v: newVertex, p:0})
     }
 
+    /** returns new arena with a new p1 vertex */
     addP1<NewV extends string>(newVertex:NewV) {
       return this.add({v: newVertex, p:1})
     }
 
+    /** returns new arean with a new edge */
     addEdge<NewE extends [V[number]['v'], V[number]['v']]>(...newEdge: NewE): Arena<V, [...E, NewE]> {
       if (this.compiled) throw new Error('already compiled')
 
@@ -39,6 +46,7 @@ class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends bo
       return new Arena<V, [...E, NewE]>(this.vertices, [...this.edges, [...newEdge]]);
     }
 
+    /** returns neighbors of a vertex */
     getNeighbors<Vert extends V[number]['v']>(vertex: Vert): NeighborsOf<Vert, V, E> {
       if (this.compiled) {
         return (this.adjacencyList.get(vertex) ?? []) as NeighborsOf<Vert, V, E>;
@@ -54,6 +62,7 @@ class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends bo
       this.map = m
     }
 
+    /** freezes arena and adds map and adjecency list for more optimized queries */
     compile() {
       this.compiled = true as C;
       const map = new Map<V[number]['v'], V[number]>(this.vertices.map(v => [v.v, v]));
@@ -70,10 +79,12 @@ class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends bo
       return ret;
     }
 
+    /** get a vertex of the arena */
     get<Vert extends V[number]['v']>(vertex: Vert):SpecificVertexOf<Vert, V> {
       return (this.map?.get(vertex) ?? this.vertices.find(v => v.v === vertex)) as SpecificVertexOf<Vert, V>;
     }
 
+    /** limits arena to a subset of vertex. returns new arena */
     subArena<NewVert extends readonly V[number]['v'][]>(newV: NewVert): Arena<SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
       const newVertices = this.vertices.filter(v=>newV.includes(v.v)) as SpecificVerticesOf<NewVert, V>
       const newEdges = this.edges.filter(e=>newV.includes(e[0]) && newV.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
@@ -88,7 +99,7 @@ class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C extends bo
 
 }
 
-type NeighborsOf<
+export type NeighborsOf<
   V extends SimpleVertex,
   Vertices extends readonly Vertex[],
   Edges_ extends Edges
