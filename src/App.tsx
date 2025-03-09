@@ -1,23 +1,41 @@
 import { useState } from 'react'
 import './App.css'
-import { Arena } from './games/arena'
+import { Arena, Vertex } from './games/arena'
+import { z } from 'zod'
+
+const vertexSchema = z.object({
+  v: z.string(),
+  p: z.union([z.literal(0),z.literal(1)])
+})
+
+const edgeSchema = z.tuple([ z.string(),z.string() ])
 
 function App() {
-  const [arena, setArena] = useState(new Arena())
+  const [arena, setArena] = useState(new Arena<any, Vertex<any>[], [string, string][]>())
 
   return (
     <>
-      <form action={(v) => {
+      <ArenaForm finish={setArena}></ArenaForm>
+      <div className='bg-red-500'>
+        {'hello '}
+        {arena.toString()}
+      </div>
+    </>
+  )
+}
+
+function ArenaForm(props: {finish: (completeArena: Arena<any, Vertex<any>[], [string, string][]>)=>void}) {
+  const [arena, setArena] = useState(new Arena<any, Vertex<any>[], [string, string][]>())
+
+    return <>
+      <form action={(form) => {
           setArena(prev => {
-            const vertexName = v.get('vertex')
-            const player = Number(v.get('player'))
-            if (![0,1].includes(player)) {
-              console.error('Player is either 0 or 1');
-              return prev
-            }
+            const formVertex = {p:Number(form.get('player')), v: form.get('vertex')}
+            const parsed = vertexSchema.parse(formVertex)
+
             try {
-              const newArena = prev.add({v:vertexName, p:player})
-              return newArena
+              const newArena = prev.add(parsed as Vertex<any>)
+              return newArena as unknown as typeof arena
             }
             catch (e) {
               console.error(e);
@@ -36,20 +54,13 @@ function App() {
 
       <form action={(v) => {
           setArena(prev => {
-            const v1 = v.get('v1')
-            const v2 = v.get('v2')
+            const edge = [ v.get('v1'), v.get('v2')]
+
+            const parsedEdge = edgeSchema.parse(edge)
             
-            if (!arena.get(v1)) {
-              console.error(`Option ${v1} is not in the arean`);
-              return prev
-            }
-            if (!arena.get(v2)) {
-              console.error(`Option ${v2} is not in the arean`);
-              return prev
-            }
             
             try {
-              const newArena = prev.addEdge(v1, v2)
+              const newArena = prev.addEdge(...parsedEdge)
               return newArena
             }
             catch (e) {
@@ -70,12 +81,9 @@ function App() {
         </select>
         <button type='submit' className='bg-blue-500 rounded' > submit </button>
       </form>
-      <div className='bg-red-500'>
-        {'hello '}
-        {arena.toString()}
-      </div>
-    </>
-  )
+
+        <button type='button' className='bg-red-500 rounded' onClick={()=>props.finish(arena)}> finish </button>
+       </>
 }
 
 export default App
