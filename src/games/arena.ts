@@ -5,7 +5,7 @@ export type SimpleVertices = readonly SimpleVertex[]
 export type Edge = [SimpleVertex, SimpleVertex]
 export type Edges = readonly Edge[]
 
-export class Arena<Details, V extends readonly Vertex<Details>[] = [], E extends Edges = [], C extends boolean = false> {
+export class Arena<Details=any, V extends readonly Vertex<Details>[] = Vertex<Details>[], E extends Edges = Edges, C extends boolean = false> {
     compiled: C
     vertices: V;
     edges: E;

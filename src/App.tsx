@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import {  CSSProperties, MouseEventHandler, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { Arena, Vertex } from './games/arena'
 import { z } from 'zod'
+import VertexComponent from './vertex'
+import Xarrow from 'react-xarrows'
 
 const vertexSchema = z.object({
   v: z.string(),
@@ -27,7 +29,7 @@ function App() {
 function ArenaForm(props: {finish: (completeArena: Arena<any, Vertex<any>[], [string, string][]>)=>void}) {
   const [arena, setArena] = useState(new Arena<any, Vertex<any>[], [string, string][]>())
 
-    return <>
+    return <div className='flex flex-col'>
       <form action={(form) => {
           setArena(prev => {
             const formVertex = {p:Number(form.get('player')), v: form.get('vertex')}
@@ -83,7 +85,96 @@ function ArenaForm(props: {finish: (completeArena: Arena<any, Vertex<any>[], [st
       </form>
 
         <button type='button' className='bg-red-500 rounded' onClick={()=>props.finish(arena)}> finish </button>
-       </>
+
+        Preview:
+        <ArenaPreview arena={arena}/>
+
+       </div>
+}
+
+
+function ArenaPreview(props: {arena: Arena}) {
+  const {arena} = props
+  const {vertices, edges} = arena
+
+  const verticesRefs = useRef<Record<typeof vertices[number]['v'],{current:HTMLDivElement| null} >>({})
+
+  const [pinged, setPinged] = useState(edges.map((e)=>({e, ping: new Date()})))
+
+  useEffect(()=>{
+    setPinged(edges.map((e)=>({e, ping: new Date()})))
+  }, [edges])
+
+  return <div className=''>
+    {vertices.map((v)=>(
+      <DraggableVertex key={v.v} verticesRefs={verticesRefs} vertex={v} ping={(v)=>{
+        setPinged(prev=>{
+          return prev.map(({e, ping: prevPing})=>{
+            if (e.includes(v.v)) return {e, ping: new Date()}
+            return {e, ping:prevPing}
+          })
+        })
+      }}/>))}
+
+    {edges.map(([v1,v2], i)=>{
+      const ref1 = verticesRefs.current[v1]
+      const ref2 = verticesRefs.current[v2]
+      if (!ref1 || !ref2) return null
+
+      return <Xarrow key={`${v1}${v2}${pinged[i]?.ping.getTime()}`} start={ref1} end={ref2}/>
+
+    })}
+
+  </div>
+
+}
+
+function useDragMousePosition() {
+  const [wasDragged, setWasDragged] = useState(false)
+  const [dragging, setDragging] = useState(false);
+  const [pos, setPos] = useState({x:NaN, y:NaN})
+
+  const style = useMemo<CSSProperties>(()=>wasDragged ? {position:'absolute', left:pos.x, top: pos.y, cursor:'grab'} : {cursor:'grab'},[wasDragged, pos])
+
+  const onMouseDown: MouseEventHandler<HTMLDivElement> = (e) => {
+    setWasDragged(true)
+    setDragging(true);
+  };
+
+  const onMouseMove: MouseEventHandler<HTMLDivElement> = (e) => {
+    if (dragging) {
+      console.log('aaa', e);
+      
+      setPos({ x: e.clientX - 50,  y: e.clientY - 50 }); // Center the box
+    }
+  };
+
+  const onMouseUp :MouseEventHandler<HTMLDivElement> = (e)=>{
+    setDragging(false);
+  };
+
+  return {style, onMouseDown, onMouseMove, onMouseUp}
+}
+
+
+function DraggableVertex(props:{vertex:Vertex, verticesRefs:any, ping?: (v:Vertex)=>void}) {
+  const {vertex, ping, verticesRefs} = props
+  const {onMouseMove ,...dragProps} = useDragMousePosition()
+  
+  const wrappedOnMouseMove: typeof onMouseMove = (e)=>{
+    onMouseMove(e)
+    ping?.(vertex)
+  }
+  
+    return <div className='m-5 w-fit bg-white' 
+            {...dragProps}
+            onMouseMove={wrappedOnMouseMove}
+              ref={el=>{
+              verticesRefs.current[vertex.v] = {current : el}
+              }}
+            >
+              <VertexComponent className='m-5' vertex={vertex}  />
+            </div>
 }
 
 export default App
