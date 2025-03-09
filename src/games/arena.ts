@@ -89,7 +89,7 @@ export class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C ext
     }
 
     /** limits arena to a subset of vertex. returns new arena */
-    subArena<NewVert extends readonly V[number]['v'][]>(newV: NewVert): Arena<SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
+    subArena<NewVert extends ReadonlyArray<V[number]['v']>>(newV: NewVert): Arena<SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
       const newVertices = this.vertices.filter(v=>newV.includes(v.v)) as SpecificVerticesOf<NewVert, V>
       const newEdges = this.edges.filter(e=>newV.includes(e[0]) && newV.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
 
@@ -200,3 +200,4 @@ type hhhh = EdgesThatContainVertices<['q1', 'q2'], typeof a.edges, 1>
 
 
 const subArena = a.subArena<['q1','q2']>(['q1','q2'])
+const subArena2 = a.subArena(['q1','q2'] as const)
