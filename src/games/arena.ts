@@ -15,6 +15,10 @@ export class Arena<V extends readonly Vertex[] = [], E extends Edges = [], C ext
         this.compiled = false as C
     }
 
+    toString() {
+      return `Vertices: ${this.vertices.map(v=>`${v.v} - p${v.p}`)} Edges: ${this.edges.map(e=> `${e[0]} -> ${e[1]}`)}`
+    }
+
     /** returns new arena with the new vertex */
     add<NewV extends Vertex>(newVertex: NewV) {
       if (this.compiled) throw new Error('already compiled')

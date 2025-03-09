@@ -35,9 +35,9 @@ export class Game<V extends readonly Vertex[] = [], E extends Edges = []> {
 }
 
 
-const arena = new Arena().addP0('1').addP1('2').addEdge("1","2").compile()
-const game = new Game(arena, '1', (p)=>p.find(v=>v.v === '1') ? 0 : 1)
+// const arena = new Arena().addP0('1').addP1('2').addEdge("1","2").compile()
+// const game = new Game(arena, '1', (p)=>p.find(v=>v.v === '1') ? 0 : 1)
 
-game.play<typeof game.currentState.v>("2")
-game.getCurrentWinner()
-// game.play<typeof game.currentState.v>()
+// game.play<typeof game.currentState.v>("2")
+// game.getCurrentWinner()
+// // game.play<typeof game.currentState.v>()
