@@ -6,8 +6,8 @@ import VertexComponent from './vertex'
 import Xarrow from 'react-xarrows'
 
 const vertexSchema = z.object({
-  v: z.string(),
-  p: z.union([z.literal(0),z.literal(1)])
+  id: z.string(),
+  player: z.union([z.literal(0),z.literal(1)])
 })
 
 const edgeSchema = z.tuple([ z.string(),z.string() ])
@@ -32,7 +32,7 @@ function ArenaForm(props: {finish: (completeArena: Arena<any, Vertex<any>[], [st
     return <div className='flex flex-col'>
       <form action={(form) => {
           setArena(prev => {
-            const formVertex = {p:Number(form.get('player')), v: form.get('vertex')}
+            const formVertex = {player:Number(form.get('player')), id: form.get('vertex')}
             const parsed = vertexSchema.parse(formVertex)
 
             try {
@@ -72,13 +72,13 @@ function ArenaForm(props: {finish: (completeArena: Arena<any, Vertex<any>[], [st
           })
         }}>
         <select name='v1' className='border border-white rounded'>
-          {arena.vertices.map(v=><option key={v.v}>
-            {v.v}
+          {arena.vertices.map(v=><option key={v.id}>
+            {v.id}
           </option>)}
         </select>
         <select name='v2' className='border border-white rounded'>
-          {arena.vertices.map(v=><option key={v.v}>
-            {v.v}
+          {arena.vertices.map(v=><option key={v.id}>
+            {v.id}
           </option>)}
         </select>
         <button type='submit' className='bg-blue-500 rounded' > submit </button>
@@ -97,7 +97,7 @@ function ArenaPreview(props: {arena: Arena}) {
   const {arena} = props
   const {vertices, edges} = arena
 
-  const verticesRefs = useRef<Record<typeof vertices[number]['v'],{current:HTMLDivElement| null} >>({})
+  const verticesRefs = useRef<Record<typeof vertices[number]['id'],{current:HTMLDivElement| null} >>({})
 
   const [pinged, setPinged] = useState(edges.map((e)=>({e, ping: new Date()})))
 
@@ -107,10 +107,10 @@ function ArenaPreview(props: {arena: Arena}) {
 
   return <div className=''>
     {vertices.map((v)=>(
-      <DraggableVertex key={v.v} verticesRefs={verticesRefs} vertex={v} ping={(v)=>{
+      <DraggableVertex key={v.id} verticesRefs={verticesRefs} vertex={v} ping={(v)=>{
         setPinged(prev=>{
           return prev.map(({e, ping: prevPing})=>{
-            if (e.includes(v.v)) return {e, ping: new Date()}
+            if (e.includes(v.id)) return {e, ping: new Date()}
             return {e, ping:prevPing}
           })
         })
@@ -170,7 +170,7 @@ function DraggableVertex(props:{vertex:Vertex, verticesRefs:any, ping?: (v:Verte
             {...dragProps}
             onMouseMove={wrappedOnMouseMove}
               ref={el=>{
-              verticesRefs.current[vertex.v] = {current : el}
+              verticesRefs.current[vertex.id] = {current : el}
               }}
             >
               <VertexComponent className='m-5' vertex={vertex}  />

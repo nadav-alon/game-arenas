@@ -1,16 +1,16 @@
 export type Player = 0 | 1;
-export type SimpleVertex = string
-export type Vertex<Details = any> = {v: SimpleVertex, p: Player, d?: Details}
-export type SimpleVertices = readonly SimpleVertex[]
-export type Edge = [SimpleVertex, SimpleVertex]
+export type VertexId = string
+export type Vertex<Data = any> = {id: VertexId, player: Player, data?: Data}
+export type VertexIds = readonly VertexId[]
+export type Edge = [VertexId, VertexId]
 export type Edges = readonly Edge[]
 
-export class Arena<Details=any, V extends readonly Vertex<Details>[] = Vertex<Details>[], E extends Edges = Edges, C extends boolean = false> {
+export class Arena<Data=any, V extends readonly Vertex<Data>[] = Vertex<Data>[], E extends Edges = Edges, C extends boolean = false> {
     compiled: C
     vertices: V;
     edges: E;
-    map: C extends true ? Map<V[number]['v'], V[number]> : never
-    adjacencyList: C extends true ? Map<V[number]['v'], V[number]['v'][]> : never
+    map: C extends true ? Map<V[number]['id'], V[number]> : never
+    adjacencyList: C extends true ? Map<V[number]['id'], V[number]['id'][]> : never
 
     constructor(vertices: V = [] as unknown as V, edges: E = [] as unknown as E) {
         this.vertices = vertices
@@ -21,42 +21,42 @@ export class Arena<Details=any, V extends readonly Vertex<Details>[] = Vertex<De
     }
 
     toString() {
-      return `Vertices: ${this.vertices.map(v=>`${v.v} - p${v.p}`)} Edges: ${this.edges.map(e=> `${e[0]} -> ${e[1]}`)}`
+      return `Vertices: ${this.vertices.map(v=>`${v.id} - p${v.player}`)} Edges: ${this.edges.map(e=> `${e[0]} -> ${e[1]}`)}`
     }
 
     /** returns new arena with the new vertex */
-    add<NewV extends Vertex<Details>>(newVertex: NewV) {
+    add<NewV extends Vertex<Data>>(newVertex: NewV) {
       if (this.compiled) throw new Error('already compiled')
-      if (this.vertices.find(v=>v.v === newVertex.v)) throw new Error('Vertex already exists')
+      if (this.vertices.find(v=>v.id === newVertex.id)) throw new Error('Vertex already exists')
 
-      const ret = new Arena<Details, [...V, NewV], E>([...this.vertices, newVertex], this.edges)
+      const ret = new Arena<Data, [...V, NewV], E>([...this.vertices, newVertex], this.edges)
       return ret
     }
 
     /** returns new arena with a new p0 vertex */
     addP0<NewV extends string>(newVertex:NewV) {
-      return this.add({v: newVertex, p:0})
+      return this.add({id: newVertex, player:0})
     }
 
     /** returns new arena with a new p1 vertex */
     addP1<NewV extends string>(newVertex:NewV) {
-      return this.add({v: newVertex, p:1})
+      return this.add({id: newVertex, player:1})
     }
 
     /** returns new arean with a new edge */
-    addEdge<NewE extends [V[number]['v'], V[number]['v']]>(...newEdge: NewE): Arena<Details, V, [...E, NewE]> {
+    addEdge<NewE extends [V[number]['id'], V[number]['id']]>(...newEdge: NewE): Arena<Data, V, [...E, NewE]> {
       if (this.compiled) throw new Error('already compiled')
 
       const [from, to] = newEdge;
-      if (!this.vertices.some(v => v.v === from) || !this.vertices.some(v => v.v === to)) {
+      if (!this.vertices.some(v => v.id === from) || !this.vertices.some(v => v.id === to)) {
         throw new Error(`Cannot add edge ${from} → ${to}: One or both vertices do not exist`);
       }
       
-      return new Arena<Details, V, [...E, NewE]>(this.vertices, [...this.edges, [...newEdge]]);
+      return new Arena<Data, V, [...E, NewE]>(this.vertices, [...this.edges, [...newEdge]]);
     }
 
     /** returns neighbors of a vertex */
-    getNeighbors<Vert extends V[number]['v']>(vertex: Vert): NeighborsOf<Vert, V, E> {
+    getNeighbors<Vert extends V[number]['id']>(vertex: Vert): NeighborsOf<Vert, V, E> {
       if (this.compiled) {
         return (this.adjacencyList.get(vertex) ?? []) as NeighborsOf<Vert, V, E>;
       }
@@ -72,28 +72,28 @@ export class Arena<Details=any, V extends readonly Vertex<Details>[] = Vertex<De
     /** freezes arena and adds map and adjecency list for more optimized queries */
     compile() {
       this.compiled = true as C;
-      const map = new Map<V[number]['v'], V[number]>(this.vertices.map(v => [v.v, v]));
+      const map = new Map<V[number]['id'], V[number]>(this.vertices.map(v => [v.id, v]));
       
-      const adjacencyList = new Map<V[number]['v'], V[number]['v'][]>();
+      const adjacencyList = new Map<V[number]['id'], V[number]['id'][]>();
       this.edges.forEach(([from, to]) => {
         if (!adjacencyList.has(from)) adjacencyList.set(from, []);
         adjacencyList.get(from)!.push(to);
       });
 
-      const ret = this as Arena<Details, V, E, true>;
+      const ret = this as Arena<Data, V, E, true>;
       ret._setMap(map);
       ret.adjacencyList = adjacencyList;
       return ret;
     }
 
     /** get a vertex of the arena */
-    get<Vert extends V[number]['v']>(vertex: Vert):SpecificVertexOf<Vert, V> {
-      return (this.map?.get(vertex) ?? this.vertices.find(v => v.v === vertex)) as SpecificVertexOf<Vert, V>;
+    get<Vert extends V[number]['id']>(vertex: Vert):SpecificVertexOf<Vert, V> {
+      return (this.map?.get(vertex) ?? this.vertices.find(v => v.id === vertex)) as SpecificVertexOf<Vert, V>;
     }
 
     /** limits arena to a subset of vertex. returns new arena */
-    subArena<NewVert extends ReadonlyArray<V[number]['v']>>(newV: NewVert): Arena<Details, SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
-      const newVertices = this.vertices.filter(v=>newV.includes(v.v)) as SpecificVerticesOf<NewVert, V>
+    subArena<NewVert extends ReadonlyArray<V[number]['id']>>(newV: NewVert): Arena<Data, SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
+      const newVertices = this.vertices.filter(v=>newV.includes(v.id)) as SpecificVerticesOf<NewVert, V>
       const newEdges = this.edges.filter(e=>newV.includes(e[0]) && newV.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
 
       const ret = new Arena(newVertices, newEdges).compile()
@@ -107,11 +107,11 @@ export class Arena<Details=any, V extends readonly Vertex<Details>[] = Vertex<De
 }
 
 export type NeighborsOf<
-  V extends SimpleVertex,
+  V extends VertexId,
   Vertices extends readonly Vertex[],
   Edges_ extends Edges
 > =
-  V extends Vertices[number]['v'] // Ensure Vertex exists in Vertices
+  V extends Vertices[number]['id'] // Ensure Vertex exists in Vertices
     ? Edges_ extends [[infer Source extends string, infer Target extends string], ...infer Rest extends Edges]
       ? V extends Source
         ? [Target, ...NeighborsOf<V, Vertices, Rest>]
@@ -125,7 +125,7 @@ type SpecificVertexOf<
   Vertices extends readonly Vertex[]> = 
   Vertices extends [infer First, ...infer Rest]  
   ? First extends Vertex ? 
-  V extends First['v'] ? First : 
+  V extends First['id'] ? First : 
   Rest extends readonly Vertex[] ?
   SpecificVertexOf<V, Rest> 
   : never
@@ -134,12 +134,12 @@ type SpecificVertexOf<
 
 
 type SpecificVerticesOf<
-  V extends SimpleVertices,
+  V extends VertexIds,
   Vertices extends readonly Vertex[]> = 
   V extends [infer First, ...infer Rest]  
   ? First extends string ? 
   (
-  Rest extends SimpleVertices ?
+  Rest extends VertexIds ?
   [SpecificVertexOf<First, Vertices>, ...SpecificVerticesOf<Rest, Vertices>] : 
   [SpecificVertexOf<First, Vertices>])
   : readonly []
@@ -165,23 +165,24 @@ type EdgesThatContainVertex<
 
 
 type EdgesThatContainVertices<
-  V extends SimpleVertices,
+  V extends VertexIds,
   Edges_ extends Edges,
   Position extends 0 | 1
   > = 
   V extends [infer First, ...infer Rest] ?
   First extends string ? 
-  Rest extends SimpleVertices ? 
+  Rest extends VertexIds ? 
   [...EdgesThatContainVertex<First,Edges_,Position>, ...EdgesThatContainVertices<Rest, Edges_, Position>]
   : [...EdgesThatContainVertex<First,Edges_,Position>]
   : readonly []
   : readonly []
 
-type EdgesThatStartAndEndAtVertices<V extends SimpleVertices, Edges_ extends Edges> = 
+type EdgesThatStartAndEndAtVertices<V extends VertexIds, Edges_ extends Edges> = 
     EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges_, 1>, 0>
 
 
 const a = new Arena().addP0('q1').addP1('q2').addEdge("q1","q2").addP0('q3').addEdge("q2","q1").addEdge("q2","q3").addEdge("q3","q1").compile()
+
 
 
 const aNeighbors = a.getNeighbors('q2')
