@@ -2,6 +2,9 @@ name: Deploy to Github Pages
 run-name: Deploying app to github pages
 on: workflow_call
 
+permissions:
+  contents: write
+
 env:
   NODE_VERSION: 20
 
