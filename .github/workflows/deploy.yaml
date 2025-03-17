@@ -1,0 +1,14 @@
+name: ci-cd
+run-name: Linting and Deploying
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  CI:
+    uses: ./.github/workflows/ci.yaml
+
+  Deploy:
+    needs: CI
+    uses: ./.github/workflows/github-pages.yaml
