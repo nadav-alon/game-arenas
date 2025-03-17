@@ -3,17 +3,17 @@ import { Arena } from './arena'
 
 describe('Arena', () => {
     describe('Build Arena', () => {
-        it('test adding vertices', () => {
+        it('Adding Vertices', () => {
             const arena = new Arena().addP0('a').addP1('b')
             expect(arena.vertices.length).toBe(2)
         })
 
-        it('test adding edges', () => {
+        it('Adding Edges', () => {
             const arena = new Arena().addP0('a').addP1('b').addEdge('a', 'b').addEdge('a', 'a')
             expect(arena.edges.length).toBe(2)
         })
 
-        it('testing neighbors', () => {
+        it('Neighbors', () => {
             const arena = new Arena().addP0('a').addP1('b').addEdge('a', 'b').addEdge('a', 'a')
 
             const aNeighbors = arena.getNeighbors('a')
@@ -23,7 +23,7 @@ describe('Arena', () => {
             expect(bNeighbors.length).toBe(0)
         })
 
-        it('testing subarena', () => {
+        it('Subarena', () => {
             const arena = new Arena().
                 addP0('0').
                 addP0('1').
