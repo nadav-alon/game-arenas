@@ -10,6 +10,7 @@
     "predeploy": "pnpm run build",
     "deploy": "gh-pages -d build",
     "lint": "eslint .",
+    "test": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
