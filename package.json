@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "predeploy": "pnpm build",
-    "deploy": "predeploy && gh-pages -d dist -u 'github-actions-bot <support+actions@github.com>'",
+    "deploy": "pnpm predeploy && gh-pages -d dist -u 'github-actions-bot <support+actions@github.com>'",
     "lint": "eslint .",
     "test": "vitest",
     "preview": "vite preview"
