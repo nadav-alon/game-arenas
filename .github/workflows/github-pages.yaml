@@ -1,5 +1,6 @@
 name: Deploy to Github Pages
 run-name: Deploying app to github pages
+on: [push]
 jobs:
   Deploy:
     runs-on: ubuntu-latest

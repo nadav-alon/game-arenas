@@ -1,0 +1,14 @@
+name: ci-cd
+run-name: Linting and Deploying
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  CI:
+    uses: ./ci.yaml
+
+  Deploy:
+    needs: CI
+    uses: ./deploy.yaml

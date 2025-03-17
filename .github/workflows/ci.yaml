@@ -1,0 +1,12 @@
+name: CI
+run-name: Continous Integration
+on: workflow_call
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install modules
+        run: pnpm
+      - name: Run ESLint
+        run: eslint . --ext .js,.jsx,.ts,.tsx
