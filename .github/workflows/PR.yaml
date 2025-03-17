@@ -7,4 +7,4 @@ on:
 
 jobs:
   CI:
-    uses: "./ci.yaml"
+    uses: ./.github/workflows/ci.yaml

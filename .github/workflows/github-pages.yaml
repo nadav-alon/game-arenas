@@ -1,6 +1,6 @@
 name: Deploy to Github Pages
 run-name: Deploying app to github pages
-on: [push]
+on: workflow_call
 jobs:
   Deploy:
     runs-on: ubuntu-latest

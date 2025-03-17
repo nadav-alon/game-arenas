@@ -7,8 +7,14 @@ on:
 
 jobs:
   CI:
-    uses: ./ci.yaml
+    runs-on: ubuntu-latest
+    steps:
+      - name: CI
+        uses: ./.github/workflows/ci.yaml
 
   Deploy:
+    runs-on: ubuntu-latest
     needs: CI
-    uses: ./deploy.yaml
+    steps:
+      - name: Deploy
+        uses: ./.github/workflows/github-pages.yaml
