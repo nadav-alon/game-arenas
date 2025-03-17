@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react"
-import vis from "vis-network/declarations/index-legacy-bundle"
 import { VisEdge, VisNode } from "vis-network/declarations/network/gephiParser"
+import * as vis from 'vis-network'
 
-export function Graph(props:{id:string, className:string, nodes: VisNode[], edges: VisEdge[]}) {
+export function Graph(props:{id:string, className?:string, nodes: VisNode[], edges: VisEdge[]}) {
     const {id, className, edges, nodes} = props
     const graphRef = useRef<HTMLDivElement>(null)
 
