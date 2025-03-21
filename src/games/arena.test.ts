@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { Arena, GenericArena } from './arena'
+import { Arena, GenericArena, Vertex, VertexId } from './arena'
 
 describe('Arena', () => {
     describe('Build Arena', () => {
@@ -175,7 +175,10 @@ describe('Arena', () => {
                     addEdge('9', '0').
                     addEdge('10', '0').compile()
 
+                expectTypeOf(arena.subArena).parameter(0).toEqualTypeOf<ReadonlyArray<typeof arena.vertices[number]['id']>>()
+
                 const subArena = arena.subArena(['0', '1'] as ['0', '1'])
+
                 expectTypeOf(subArena).toEqualTypeOf<Arena<unknown, [{
                     id: "0";
                     player: 0;
@@ -197,9 +200,53 @@ describe('Arena', () => {
                 expectTypeOf(arena.add).returns.toEqualTypeOf<GenericArena>()
                 expectTypeOf(arena.addEdge).returns.toEqualTypeOf<GenericArena>()
             })
-            it.todo('Get', () => { })
-            it.todo('Neighbors', () => { })
-            it.todo('Subarena', () => { })
+            describe('Get', () => {
+                it('Parameters Types', () => {
+                    let arena: GenericArena = new Arena()
+                    arena = arena.addP0('0').addP1('1').compile()
+
+                    expectTypeOf(arena.get).parameter(0).toEqualTypeOf<VertexId>()
+                })
+                it('Return Type', () => {
+                    let arena: GenericArena = new Arena()
+                    arena = arena.addP0('0').addP1('1').compile()
+
+                    expectTypeOf(arena.get).returns.toEqualTypeOf<Vertex<unknown>>()
+                })
+
+            })
+            describe('Neighbors', () => {
+                it('Parameters Types', () => {
+                    let arena: GenericArena = new Arena()
+                    arena = arena.addP0('0').addP1('1').compile()
+
+                    expectTypeOf(arena.getNeighbors).parameter(0).toEqualTypeOf<VertexId>()
+                })
+                it('Return Type', () => {
+                    let arena: GenericArena = new Arena()
+                    arena = arena.addP0('0').addP1('1').compile()
+
+                    expectTypeOf(arena.getNeighbors).returns.toEqualTypeOf<Vertex<unknown>[]>()
+                })
+
+            })
+            describe('Subarena', () => {
+
+                it('Parameter Types', () => {
+                    let arena: GenericArena = new Arena()
+                    arena = arena.addP0('0').addP1('1').compile()
+
+                    expectTypeOf(arena.subArena).parameter(0).toEqualTypeOf<readonly VertexId[]>()
+                })
+
+                it('Return Types', () => {
+                    let arena: GenericArena = new Arena()
+                    arena = arena.addP0('0').addP1('1').compile()
+
+                    expectTypeOf(arena.subArena).returns.toEqualTypeOf<GenericArena>()
+                })
+
+            })
         })
     })
 })

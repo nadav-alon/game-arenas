@@ -102,14 +102,14 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
   }
 
   /** limits arena to a subset of vertex. returns new arena */
-  subArena<NewVert extends ReadonlyArray<V[number]['id']>>(newV: NewVert): Arena<Data, SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
-    const newVertices = this.vertices.filter(v => newV.includes(v.id)) as SpecificVerticesOf<NewVert, V>
-    const newEdges = this.edges.filter(e => newV.includes(e[0]) && newV.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
+  subArena<NewVert extends ReadonlyArray<V[number]['id']>>(subVertices: NewVert): Arena<Data, SpecificVerticesOf<NewVert, V>, EdgesThatStartAndEndAtVertices<NewVert, E>, true> {
+    const newVertices = this.vertices.filter(v => subVertices.includes(v.id)) as SpecificVerticesOf<NewVert, V>
+    const newEdges = this.edges.filter(e => subVertices.includes(e[0]) && subVertices.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
 
     const ret = new Arena(newVertices, newEdges).compile()
 
     // some new Vertex doesnt have a successor
-    if (newV.some(v => ret.getNeighbors(v).length === 0)) throw new Error('Invalid sub-arena')
+    if (subVertices.some(v => ret.getNeighbors(v).length === 0)) throw new Error('Invalid sub-arena')
 
     return ret
   }
@@ -122,11 +122,13 @@ export type NeighborsOf<
   Edges_ extends Edges
 > =
   V extends Vertices[number]['id'] // Ensure Vertex exists in Vertices
+  ? IsTuple<Edges_> extends true
   ? Edges_ extends [[infer Source extends string, infer Target extends string], ...infer Rest extends Edges]
   ? V extends Source
   ? [Target, ...NeighborsOf<V, Vertices, Rest>]
   : NeighborsOf<V, Vertices, Rest>
   : [] // If no more edges, return an empty array
+  : Vertices // If not a tuple, cannot statically determine neighbors
   : never;
 
 
