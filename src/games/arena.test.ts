@@ -70,20 +70,54 @@ describe('Arena', () => {
     })
     describe('Type Tests', () => {
         describe('Constant', () => {
-            it.todo('Building', () => {
-                const arena0 = new Arena().compile()
-                expectTypeOf(arena0).toEqualTypeOf<Arena<unknown, [], [], true>>()
+            describe('Building', () => {
+                it('Empty Arena', () => {
+                    const emptyArena = new Arena().compile()
+                    expectTypeOf(emptyArena).toEqualTypeOf<Arena<unknown, [], [], true>>()
+                })
 
-                const arena1 = new Arena().addP0('a').addP1('b').compile()
-                expectTypeOf(arena1).toEqualTypeOf<Arena<unknown, [{
-                    id: "a";
-                    player: 0;
-                }, {
-                    id: "b";
-                    player: 1;
-                }], [], true>>()
+                it('Simple Arena', () => {
+                    const simpleArena = new Arena().addP0('a').addP1('b').compile()
+                    expectTypeOf(simpleArena).toEqualTypeOf<Arena<unknown, [{
+                        id: "a";
+                        player: 0;
+                    }, {
+                        id: "b";
+                        player: 1;
+                    }], [], true>>()
+                })
+
+                it('Arena With Edges', () => {
+                    const arenaWithEdges = new Arena().addP0('a').addP1('b').addEdge('a', 'b').addEdge('a', 'a').compile()
+
+                    expectTypeOf(arenaWithEdges).toEqualTypeOf<Arena<unknown, [{
+                        id: "a";
+                        player: 0;
+                    }, {
+                        id: "b";
+                        player: 1;
+                    }], [['a', 'b'], ['a', 'a']], true>>()
+                })
             })
-            it.todo('Get', () => { })
+            describe('Get', () => {
+                describe('Parameters', () => {
+                    it('Empty', () => {
+                        const emptyArena = new Arena().compile()
+                        expectTypeOf(emptyArena.get).parameter(0).toBeNever()
+                    })
+
+                    it('Non Empty', () => {
+                        const arena = new Arena().addP0('a').addP1('b').compile()
+                        expectTypeOf(arena.get).parameter(0).toEqualTypeOf<'a' | 'b'>()
+                    })
+                })
+
+                it('Result', () => {
+                    const arena = new Arena().addP0('a').addP0('b').addEdge('a', 'b').compile()
+
+                    expectTypeOf(arena.get('a')).toEqualTypeOf<{ id: 'a', player: 0 }>()
+                })
+            })
             it.todo('Neighbors', () => { })
             it.todo('Subarena', () => { })
         })
