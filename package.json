@@ -10,7 +10,7 @@
     "predeploy": "pnpm build",
     "deploy": "pnpm predeploy && gh-pages -d dist -u 'github-actions-bot <support+actions@github.com>' -b 'gh-pages'",
     "lint": "eslint .",
-    "test": "vitest",
+    "test": "vitest --typecheck",
     "preview": "vite preview"
   },
   "dependencies": {

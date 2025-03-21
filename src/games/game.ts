@@ -1,9 +1,9 @@
-import { Arena, Edges, NeighborsOf, Player, Vertex } from "./arena";
+import { GenericCompiledArena, NeighborsOf, Player, Vertex } from "./arena";
 
 type WinCondition<V extends readonly Vertex[]> = (play: V[number][]) => Player
 
-export class Game<V extends readonly Vertex[] = [], E extends Edges = []> {
-    arena: Arena<unknown, V, E, true>;
+export class Game<Data, V extends readonly Vertex<Data>[] = []> {
+    arena: GenericCompiledArena<Data>
     currentState: V[number];
     winCondition: WinCondition<V>;
     history: V[number][]
@@ -25,7 +25,7 @@ export class Game<V extends readonly Vertex[] = [], E extends Edges = []> {
             throw new Error('cannot play this choice')
         }
 
-        this.currentState = this.arena.get(newState)
+        this.currentState = newState
         this.history.push(this.currentState)
     }
 
