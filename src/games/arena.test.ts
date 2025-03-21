@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { Arena } from './arena'
 
 describe('Arena', () => {
@@ -59,7 +59,7 @@ describe('Arena', () => {
 
             const subArena = arena.subArena(['0', '1'] as ['0', '1'])
 
-            expect(subArena.vertices.map(v => v.v)).toEqual(expect.arrayContaining(['0', '1']))
+            expect(subArena.vertices.map(v => v.id)).toEqual(expect.arrayContaining(['0', '1']))
 
             expect(subArena.edges).toEqual(expect.arrayContaining([['0', '1'], ['1', '0']]))
             expect(subArena.edges.length).toBe(2)
@@ -70,7 +70,19 @@ describe('Arena', () => {
     })
     describe('Type Tests', () => {
         describe('Constant', () => {
-            it.todo('Building', () => { })
+            it.todo('Building', () => {
+                const arena0 = new Arena().compile()
+                expectTypeOf(arena0).toEqualTypeOf<Arena<unknown, [], [], true>>()
+
+                const arena1 = new Arena().addP0('a').addP1('b').compile()
+                expectTypeOf(arena1).toEqualTypeOf<Arena<unknown, [{
+                    id: "a";
+                    player: 0;
+                }, {
+                    id: "b";
+                    player: 1;
+                }], [], true>>()
+            })
             it.todo('Get', () => { })
             it.todo('Neighbors', () => { })
             it.todo('Subarena', () => { })

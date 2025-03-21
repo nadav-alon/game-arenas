@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import "./App.css";
-import { Arena, Vertex } from "./games/arena";
+import { Arena, GenericArena, Vertex } from "./games/arena";
 import { z } from "zod";
 import VertexComponent from "./vertex";
 import Xarrow from "react-xarrows";
@@ -141,7 +141,7 @@ function ArenaForm(props: {
   );
 }
 
-function ArenaPreview(props: { arena: Arena }) {
+function ArenaPreview(props: { arena: GenericArena }) {
   const { arena } = props;
   const { vertices, edges } = arena;
 
