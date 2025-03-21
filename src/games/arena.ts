@@ -1,3 +1,5 @@
+import { IsTuple } from "./type-utils";
+
 export type Player = 0 | 1;
 export type VertexId = string
 export type Vertex<Data = unknown> = { id: VertexId, player: Player, data?: Data }
@@ -31,22 +33,25 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     if (this.compiled) throw new Error('already compiled')
     if (this.vertices.find(v => v.id === newVertex.id)) throw new Error('Vertex already exists')
 
-    const ret = new Arena<Data, [...V, NewV], E>([...this.vertices, newVertex], this.edges)
+    type NewVerticesType = IsTuple<V> extends true ? [...V, NewV] : V
+    const newVertices: NewVerticesType = [...this.vertices, newVertex] as NewVerticesType
+    const ret = new Arena<Data, NewVerticesType, E, C>(newVertices, this.edges)
     return ret
   }
 
   /** returns new arena with a new p0 vertex */
-  addP0<NewV extends string>(newVertex: NewV) {
-    return this.add({ id: newVertex, player: 0 })
+  addP0<NewV extends VertexId>(newVertex: NewV, data?: Data) {
+    return this.add({ id: newVertex, player: 0, data })
   }
 
   /** returns new arena with a new p1 vertex */
-  addP1<NewV extends string>(newVertex: NewV) {
-    return this.add({ id: newVertex, player: 1 })
+  addP1<NewV extends VertexId>(newVertex: NewV, data?: Data) {
+    return this.add({ id: newVertex, player: 1, data })
   }
 
   /** returns new arean with a new edge */
-  addEdge<NewE extends [V[number]['id'], V[number]['id']]>(...newEdge: NewE): Arena<Data, V, [...E, NewE]> {
+  addEdge<NewE extends [V[number]['id'], V[number]['id']]>(...newEdge: NewE)//: Arena<Data, V, [...E, NewE], C> 
+  {
     if (this.compiled) throw new Error('already compiled')
 
     const [from, to] = newEdge;
@@ -54,7 +59,10 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
       throw new Error(`Cannot add edge ${from} → ${to}: One or both vertices do not exist`);
     }
 
-    return new Arena<Data, V, [...E, NewE]>(this.vertices, [...this.edges, [...newEdge]]);
+    type NewEdgesType = IsTuple<E> extends true ? [...E, NewE] : E
+    const newEdges: NewEdgesType = [...this.edges, [...newEdge]] as NewEdgesType
+
+    return new Arena<Data, V, NewEdgesType, C>(this.vertices, newEdges);
   }
 
   /** returns neighbors of a vertex */
@@ -132,7 +140,7 @@ type SpecificVertexOf<
   SpecificVertexOf<V, Rest>
   : never
   : never
-  : never
+  : Vertices[number]
 
 
 type SpecificVerticesOf<
