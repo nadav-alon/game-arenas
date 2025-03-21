@@ -7,8 +7,8 @@ export type VertexIds = readonly VertexId[]
 export type Edge = [VertexId, VertexId]
 export type Edges = readonly Edge[]
 
-export type GenericArena = Arena<unknown, Vertex[], Edges, boolean>
-export type GenericCompiledArena = Arena<unknown, Vertex[], Edges, true>
+export type GenericArena<Data = unknown> = Arena<Data, Vertex<Data>[], Edges, boolean>
+export type GenericCompiledArena<Data = unknown> = Arena<Data, Vertex<Data>[], Edges, true>
 
 export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = [], C extends boolean = false> {
   compiled: C
