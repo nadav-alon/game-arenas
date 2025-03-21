@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { Arena, GenericArena, Vertex, VertexId } from './arena'
+import { Arena, GenericArena, GenericCompiledArena, Vertex, VertexId } from './arena'
 
 describe('Arena', () => {
     describe('Build Arena', () => {
@@ -243,7 +243,7 @@ describe('Arena', () => {
                     let arena: GenericArena = new Arena()
                     arena = arena.addP0('0').addP1('1').compile()
 
-                    expectTypeOf(arena.subArena).returns.toEqualTypeOf<GenericArena>()
+                    expectTypeOf(arena.subArena).returns.toEqualTypeOf<GenericCompiledArena>()
                 })
 
             })

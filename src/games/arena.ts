@@ -8,6 +8,7 @@ export type Edge = [VertexId, VertexId]
 export type Edges = readonly Edge[]
 
 export type GenericArena = Arena<unknown, Vertex[], Edges, boolean>
+export type GenericCompiledArena = Arena<unknown, Vertex[], Edges, true>
 
 export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = [], C extends boolean = false> {
   compiled: C
@@ -109,7 +110,9 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     const ret = new Arena(newVertices, newEdges).compile()
 
     // some new Vertex doesnt have a successor
-    if (subVertices.some(v => ret.getNeighbors(v).length === 0)) throw new Error('Invalid sub-arena')
+    if (newVertices.some(v => {
+      return (ret.getNeighbors(v.id) as unknown[]).length === 0
+    })) throw new Error('Invalid sub-arena')
 
     return ret
   }
@@ -135,11 +138,13 @@ export type NeighborsOf<
 type SpecificVertexOf<
   V extends string,
   Vertices extends readonly Vertex[]> =
+  IsTuple<Vertices> extends true ?
   Vertices extends [infer First, ...infer Rest]
   ? First extends Vertex ?
   V extends First['id'] ? First :
   Rest extends readonly Vertex[] ?
   SpecificVertexOf<V, Rest>
+  : never
   : never
   : never
   : Vertices[number]
@@ -148,6 +153,7 @@ type SpecificVertexOf<
 type SpecificVerticesOf<
   V extends VertexIds,
   Vertices extends readonly Vertex[]> =
+  IsTuple<Vertices> extends true ?
   V extends [infer First, ...infer Rest]
   ? First extends string ?
   (
@@ -156,6 +162,7 @@ type SpecificVerticesOf<
     [SpecificVertexOf<First, Vertices>])
   : readonly []
   : readonly []
+  : Vertices
 
 
 type EdgesThatContainVertex<
@@ -163,6 +170,7 @@ type EdgesThatContainVertex<
   Edges_ extends Edges,
   Position extends 0 | 1
 > =
+  IsTuple<Edges_> extends true ?
   Edges_ extends [infer First, ...infer Rest]
   ? First extends [string, string] ?
   V extends First[Position] ?
@@ -174,6 +182,7 @@ type EdgesThatContainVertex<
   : readonly []
   : readonly []
   : readonly []
+  : Edges_
 
 
 type EdgesThatContainVertices<
@@ -181,6 +190,7 @@ type EdgesThatContainVertices<
   Edges_ extends Edges,
   Position extends 0 | 1
 > =
+  IsTuple<V> extends true ?
   V extends [infer First, ...infer Rest] ?
   First extends string ?
   Rest extends VertexIds ?
@@ -188,9 +198,12 @@ type EdgesThatContainVertices<
   : [...EdgesThatContainVertex<First, Edges_, Position>]
   : readonly []
   : readonly []
+  : Edges_
 
 type EdgesThatStartAndEndAtVertices<V extends VertexIds, Edges_ extends Edges> =
-  EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges_, 1>, 0>
+  IsTuple<Edges_> extends true ?
+  EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges_, 1>, 0> :
+  Edges_
 
 
 // const a = new Arena().addP0('q1').addP1('q2').addEdge("q1", "q2").addP0('q3').addEdge("q2", "q1").addEdge("q2", "q3").addEdge("q3", "q1").compile()
