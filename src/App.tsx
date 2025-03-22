@@ -55,12 +55,12 @@ function ArenaForm(props: {
   const [arena, setArena] = useState<GenericArena>(new Arena());
 
   return (
-    <div className="p-5 flex flex-col">
+    <div className="p-5 flex flex-col gap-2">
       <VertexForm setArena={setArena} arena={arena} />
       <EdgeForm setArena={setArena} arena={arena} />
       <button
         type="button"
-        className="bg-red-500 rounded"
+        className="bg-blue-500! hover:bg-blue-600!"
         onClick={() => props.finish(arena.compile())}
       >
         Finish Arena
@@ -79,40 +79,44 @@ function EdgeForm(props: {
   return arena.vertices.length == 0 ? (
     <div>No vertices to connect</div>
   ) : (
-    <form
-      className="flex flex-col gap-2"
-      action={(v) => {
-        setArena((prev) => {
-          const edge = [v.get("v1"), v.get("v2")];
+    <div className="flex flex-col gap-2">
+      <label htmlFor="edge-form">Add Edge to arena</label>
+      <form
+        id="edge-form"
+        className="flex flex-col gap-2"
+        action={(v) => {
+          setArena((prev) => {
+            const edge = [v.get("v1"), v.get("v2")];
 
-          const parsedEdge = edgeSchema.parse(edge);
+            const parsedEdge = edgeSchema.parse(edge);
 
-          try {
-            const newArena = prev.addEdge(...parsedEdge);
-            return newArena;
-          } catch (e) {
-            console.error(e);
-            return prev;
-          }
-        });
-      }}
-    >
-      <div className="flex gap-2">
-        <select name="v1" className="border border-white rounded">
-          {arena.vertices.map((v) => (
-            <option key={v.id}>{v.id}</option>
-          ))}
-        </select>
-        <select name="v2" className="border border-white rounded">
-          {arena.vertices.map((v) => (
-            <option key={v.id}>{v.id}</option>
-          ))}
-        </select>
-      </div>
-      <button type="submit" className="bg-blue-500 rounded">
-        Add Edge
-      </button>
-    </form>
+            try {
+              const newArena = prev.addEdge(...parsedEdge);
+              return newArena;
+            } catch (e) {
+              console.error(e);
+              return prev;
+            }
+          });
+        }}
+      >
+        <div className="flex gap-2">
+          <select name="v1" className="border border-white rounded">
+            {arena.vertices.map((v) => (
+              <option key={v.id}>{v.id}</option>
+            ))}
+          </select>
+          <select name="v2" className="border border-white rounded">
+            {arena.vertices.map((v) => (
+              <option key={v.id}>{v.id}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="bg-blue-500 rounded">
+          Add Edge
+        </button>
+      </form>
+    </div>
   );
 }
 
