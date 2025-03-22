@@ -99,7 +99,11 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
 
   /** get a vertex of the arena */
   get<Vert extends V[number]['id']>(vertex: Vert): SpecificVertexOf<Vert, V> {
-    return (this.map?.get(vertex) ?? this.vertices.find(v => v.id === vertex)) as SpecificVertexOf<Vert, V>;
+    if (this.compiled) {
+      return this.map.get(vertex) as SpecificVertexOf<Vert, V>;
+    }
+    return this.vertices.find(v => v.id === vertex) as SpecificVertexOf<Vert, V>;
+
   }
 
   /** limits arena to a subset of vertex. returns new arena */
