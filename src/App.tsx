@@ -1,4 +1,5 @@
-import {
+import React, {
+  ComponentProps,
   CSSProperties,
   MouseEventHandler,
   useEffect,
@@ -57,8 +58,8 @@ function ArenaForm(props: {
 
   return (
     <div className="p-5 flex flex-col gap-2">
-      <VertexForm setArena={setArena} arena={arena} />
-      <EdgeForm setArena={setArena} arena={arena} />
+      <VertexForm key="vertex-form" setArena={setArena} arena={arena} />
+      <EdgeForm key="edge-form" setArena={setArena} arena={arena} />
       <button
         type="button"
         className="bg-blue-500! hover:bg-blue-600!"
@@ -80,8 +81,8 @@ function EdgeForm(props: {
   return arena.vertices.length == 0 ? (
     <div>No vertices to connect</div>
   ) : (
-    <div className="flex flex-col gap-2">
-      <label htmlFor="edge-form">Add Edge to arena</label>
+    <label htmlFor="edge-form" className="flex flex-col gap-2">
+      Add Edge to arena
       <form
         id="edge-form"
         className="flex flex-col gap-2"
@@ -103,13 +104,14 @@ function EdgeForm(props: {
       >
         <div className="flex gap-2">
           <VertexSelect arena={arena} name="v1" />
+          <div className="flex-1 text-center">{"------------------>"}</div>
           <VertexSelect arena={arena} name="v2" />
         </div>
         <button type="submit" className="bg-blue-500 rounded">
           Add Edge
         </button>
       </form>
-    </div>
+    </label>
   );
 }
 
@@ -140,47 +142,49 @@ function VertexForm(props: {
     ZodFormattedError<z.infer<typeof vertexSchema>> | undefined
   >();
 
-  const [childOf, setChildOf] = useState(false);
+  const [isChildOf, setIsChildOf] = useState(false);
+  const [chosenParent, setChosenParent] = useState<string>();
+  const [lastSubmit, setLastSubmit] = useState(new Date().getTime());
+
+  const formAction = (form: FormData) => {
+    setLastSubmit(new Date().getTime());
+    const formVertex = {
+      player: Number(form.get("submit")),
+      id: form.get("vertex"),
+    };
+
+    const parsed = vertexSchema.safeParse(formVertex);
+
+    try {
+      if (parsed.success) {
+        let newArena = arena.add(parsed.data);
+        setError(undefined);
+        const parent = form.get("parent");
+
+        if (parent && typeof parent === "string")
+          newArena = newArena.addEdge(parent, parsed.data.id);
+
+        setArena(newArena);
+      } else {
+        setError(parsed.error.format());
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
-    <form
-      className="flex-col flex gap-2"
-      action={(form) => {
-        setArena((prev) => {
-          const formVertex = {
-            player: Number(form.get("submit")),
-            id: form.get("vertex"),
-          };
-          const parsed = vertexSchema.safeParse(formVertex);
-
-          try {
-            if (parsed.success) {
-              let newArena = prev.add(parsed.data);
-              setError(undefined);
-              const parent = form.get("parent");
-
-              if (parent && typeof parent === "string")
-                newArena = newArena.addEdge(parent, parsed.data.id);
-
-              return newArena;
-            } else {
-              setError(parsed.error.format());
-              return prev;
-            }
-          } catch (e) {
-            console.error(e);
-            return prev;
-          }
-        });
-      }}
-    >
-      <label htmlFor="vertex">Add Vertex to arena:</label>
-      <input
-        type="text"
-        name="vertex"
-        id="vertex"
-        className="border border-white rounded"
-      />
+    <form className="flex-col flex gap-2" action={formAction} key={lastSubmit}>
+      <label htmlFor="vertex" className="flex gap-1">
+        Add Vertex to arena:
+        <input
+          type="text"
+          name="vertex"
+          key="vertex"
+          id="vertex"
+          className="border border-white rounded"
+        />
+      </label>
       <Errors errors={error?.id?._errors} />
       <div className="flex gap-1">
         <button type="submit" name="submit" value="0">
@@ -191,20 +195,32 @@ function VertexForm(props: {
         </button>
       </div>
 
-      <div className="flex gap-2">
-        <label htmlFor="childOf">Is child of:</label>
-        <input
-          id="childOf"
-          type="checkbox"
-          checked={childOf}
-          onChange={() => {
-            setChildOf((prev) => !prev);
-          }}
-        />
-      </div>
-
-      {arena.vertices.length > 0 && childOf ? (
-        <VertexSelect arena={arena} name="parent" />
+      {arena.vertices.length > 0 ? (
+        <>
+          <label className="flex gap-2" htmlFor="childOf">
+            Is child of:
+            <input
+              key={isChildOf ? "checked" : "unchecked"}
+              id="childOf"
+              type="checkbox"
+              checked={isChildOf}
+              onChange={(e) => {
+                setIsChildOf(e.target.checked);
+              }}
+            />
+            {isChildOf && (
+              <VertexSelect
+                key={chosenParent ?? "unchosen"}
+                arena={arena}
+                onChange={(v) => {
+                  setChosenParent(v.target.value);
+                }}
+                name="parent"
+                value={chosenParent}
+              />
+            )}
+          </label>
+        </>
       ) : null}
       <Errors errors={error?._errors} />
     </form>
@@ -339,14 +355,19 @@ function DraggableVertex(props: {
 function VertexSelect(props: {
   arena: GenericArena;
   name: string;
+  value?: string;
+  onChange?: ComponentProps<"select">["onChange"];
   className?: string;
 }) {
-  const { arena, name, className } = props;
+  const { arena, name, onChange, className, value: value } = props;
 
   return (
     <select
+      key={value ?? "unchosen"}
       name={name}
       id={name}
+      value={value}
+      onChange={onChange}
       className={twMerge("border border-white rounded", className)}
     >
       {arena.vertices.map((v) => (
