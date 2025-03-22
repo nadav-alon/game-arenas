@@ -17,6 +17,7 @@ import { z, ZodFormattedError } from "zod";
 import VertexComponent from "./vertex";
 import Xarrow from "react-xarrows";
 import { Graph } from "./vis-network/graph";
+import { twMerge } from "tailwind-merge";
 
 const edgeSchema = z.tuple([z.string(), z.string()]);
 
@@ -101,16 +102,8 @@ function EdgeForm(props: {
         }}
       >
         <div className="flex gap-2">
-          <select name="v1" className="border border-white rounded">
-            {arena.vertices.map((v) => (
-              <option key={v.id}>{v.id}</option>
-            ))}
-          </select>
-          <select name="v2" className="border border-white rounded">
-            {arena.vertices.map((v) => (
-              <option key={v.id}>{v.id}</option>
-            ))}
-          </select>
+          <VertexSelect arena={arena} name="v1" />
+          <VertexSelect arena={arena} name="v2" />
         </div>
         <button type="submit" className="bg-blue-500 rounded">
           Add Edge
@@ -147,6 +140,8 @@ function VertexForm(props: {
     ZodFormattedError<z.infer<typeof vertexSchema>> | undefined
   >();
 
+  const [childOf, setChildOf] = useState(false);
+
   return (
     <form
       className="flex-col flex gap-2"
@@ -160,8 +155,13 @@ function VertexForm(props: {
 
           try {
             if (parsed.success) {
-              const newArena = prev.add(parsed.data);
+              let newArena = prev.add(parsed.data);
               setError(undefined);
+              const parent = form.get("parent");
+
+              if (parent && typeof parent === "string")
+                newArena = newArena.addEdge(parent, parsed.data.id);
+
               return newArena;
             } else {
               setError(parsed.error.format());
@@ -190,6 +190,22 @@ function VertexForm(props: {
           Add Player 1 Vertex
         </button>
       </div>
+
+      <div className="flex gap-2">
+        <label htmlFor="childOf">Is child of:</label>
+        <input
+          id="childOf"
+          type="checkbox"
+          checked={childOf}
+          onChange={() => {
+            setChildOf((prev) => !prev);
+          }}
+        />
+      </div>
+
+      {arena.vertices.length > 0 && childOf ? (
+        <VertexSelect arena={arena} name="parent" />
+      ) : null}
       <Errors errors={error?._errors} />
     </form>
   );
@@ -317,6 +333,26 @@ function DraggableVertex(props: {
     >
       <VertexComponent className="m-5" vertex={vertex} />
     </div>
+  );
+}
+
+function VertexSelect(props: {
+  arena: GenericArena;
+  name: string;
+  className?: string;
+}) {
+  const { arena, name, className } = props;
+
+  return (
+    <select
+      name={name}
+      id={name}
+      className={twMerge("border border-white rounded", className)}
+    >
+      {arena.vertices.map((v) => (
+        <option key={v.id}>{v.id}</option>
+      ))}
+    </select>
   );
 }
 
