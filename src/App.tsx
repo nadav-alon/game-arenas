@@ -5,8 +5,6 @@ import { z, ZodFormattedError } from "zod";
 import { ArenaGraph } from "./vis-network/graph";
 import { twMerge } from "tailwind-merge";
 
-const edgeSchema = z.tuple([z.string(), z.string()]);
-
 function App() {
   const [arena, setArena] = useState<GenericCompiledArena>(new Arena());
 
@@ -42,7 +40,7 @@ function ArenaForm(props: {
       <div className="flex-grow flex flex-col">
         Preview:
         <div className="flex-grow-2 border-4 border-blue-900 rounded-2xl">
-          <ArenaGraph arena={arena} />
+          <ArenaGraph arena={arena} className="h-full" />
         </div>
       </div>
     </div>
@@ -54,6 +52,19 @@ function EdgeForm(props: {
   arena: GenericArena;
 }) {
   const { arena, setArena } = props;
+
+  const edgeSchema = z
+    .tuple([z.string(), z.string()])
+    .refine(([edgeSource, edgeTarget]) => {
+      return !arena.edges.find(([s, t]) => {
+        return s === edgeSource && t === edgeTarget;
+      });
+    }, "Edge already exists");
+
+  const [error, setError] = useState<
+    ZodFormattedError<z.infer<typeof edgeSchema>> | undefined
+  >();
+
   return arena.vertices.length == 0 ? (
     <div>No vertices to connect</div>
   ) : (
@@ -66,22 +77,38 @@ function EdgeForm(props: {
           setArena((prev) => {
             const edge = [v.get("v1"), v.get("v2")];
 
-            const parsedEdge = edgeSchema.parse(edge);
+            const parsedEdge = edgeSchema.safeParse(edge);
 
             try {
-              const newArena = prev.addEdge(...parsedEdge);
-              return newArena;
+              if (parsedEdge.success) {
+                const newArena = prev.addEdge(...parsedEdge.data);
+                setError(undefined);
+                return newArena;
+              } else {
+                setError(parsedEdge.error.format());
+              }
             } catch (e) {
               console.error(e);
-              return prev;
             }
+            return prev;
           });
         }}
       >
-        <div className="flex gap-2">
-          <VertexSelect arena={arena} name="v1" />
-          <div className="flex-1 text-center">{"------------------>"}</div>
-          <VertexSelect arena={arena} name="v2" />
+        <div>
+          <div className="flex gap-2">
+            <VertexSelect
+              arena={arena}
+              name="v1"
+              errors={error?.[0]?._errors}
+            />
+            <div className="flex-1 text-center">{"------------------>"}</div>
+            <VertexSelect
+              arena={arena}
+              name="v2"
+              errors={error?.[1]?._errors}
+            />
+          </div>
+          <Errors errors={error?._errors} />
         </div>
         <button type="submit" className="bg-blue-500 rounded">
           Add Edge
@@ -99,18 +126,13 @@ function VertexForm(props: {
 
   const vertexSchema = useMemo(
     () =>
-      z
-        .object({
-          id: z
-            .string()
-            .min(1, "Required")
-            .refine((val) => !Boolean(arena.get(val)), "Choose another name"),
-          player: z.union([z.literal(0), z.literal(1)]),
-        })
-        .refine((data) => {
-          console.log({ data });
-          return true;
-        }),
+      z.object({
+        id: z
+          .string()
+          .min(1, "Required")
+          .refine((val) => !Boolean(arena.get(val)), "Choose another name"),
+        player: z.union([z.literal(0), z.literal(1)]),
+      }),
     [arena],
   );
 
@@ -218,22 +240,26 @@ function VertexSelect(props: {
   value?: string;
   onChange?: ComponentProps<"select">["onChange"];
   className?: string;
+  errors?: string[];
 }) {
   const { arena, name, onChange, className, value: value } = props;
 
   return (
-    <select
-      key={value ?? "unchosen"}
-      name={name}
-      id={name}
-      value={value}
-      onChange={onChange}
-      className={twMerge("border border-white rounded", className)}
-    >
-      {arena.vertices.map((v) => (
-        <option key={v.id}>{v.id}</option>
-      ))}
-    </select>
+    <div className="flex flex-col gap-2">
+      <select
+        key={value ?? "unchosen"}
+        name={name}
+        id={name}
+        value={value}
+        onChange={onChange}
+        className={twMerge("border border-white rounded", className)}
+      >
+        {arena.vertices.map((v) => (
+          <option key={v.id}>{v.id}</option>
+        ))}
+      </select>
+      <Errors errors={props.errors} />
+    </div>
   );
 }
 
