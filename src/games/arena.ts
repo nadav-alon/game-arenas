@@ -135,7 +135,7 @@ export type NeighborsOf<
   ? [Target, ...NeighborsOf<V, Vertices, Rest>]
   : NeighborsOf<V, Vertices, Rest>
   : [] // If no more edges, return an empty array
-  : Vertices // If not a tuple, cannot statically determine neighbors
+  : Vertices[number]['id'][] // If not a tuple, cannot statically determine neighbors
   : never;
 
 

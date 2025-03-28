@@ -226,7 +226,7 @@ describe('Arena', () => {
                     let arena: GenericArena = new Arena()
                     arena = arena.addP0('0').addP1('1').compile()
 
-                    expectTypeOf(arena.getNeighbors).returns.toEqualTypeOf<Vertex<unknown>[]>()
+                    expectTypeOf(arena.getNeighbors).returns.toEqualTypeOf<VertexId[]>()
                 })
 
             })

@@ -25,7 +25,7 @@ export class Game<Data, V extends readonly Vertex<Data>[] = []> {
             throw new Error('cannot play this choice')
         }
 
-        this.currentState = newState
+        this.currentState = this.arena.get(newState)
         this.history.push(this.currentState)
     }
 
@@ -35,9 +35,12 @@ export class Game<Data, V extends readonly Vertex<Data>[] = []> {
 }
 
 
-// const arena = new Arena().addP0('1').addP1('2').addEdge("1","2").compile()
-// const game = new Game(arena, '1', (p)=>p.find(v=>v.v === '1') ? 0 : 1)
+// type ReachabilityData = { accepting: boolean }
+// export const createReachabilityGame = <V extends Vertex<ReachabilityData>[], E extends Edges>(v: V, e: E) => {
+//     const arena = new Arena<ReachabilityData, V, E>(v, e).compile()
+//     arena.add({ id: '1', player: 0, data: { accepting: true } })
+//     const neigh = arena.getNeighbors('1')
+//     const x = neigh[0]
 
-// game.play<typeof game.currentState.v>("2")
-// game.getCurrentWinner()
-// // game.play<typeof game.currentState.v>()
+//     return new Game(arena, v[0].id, () => true)
+// }
