@@ -25,8 +25,29 @@ export function Graph(props: {
   return <div ref={graphRef} id={id} className={className}></div>;
 }
 
-export function ArenaGraph(props: { arena: GenericArena; className?: string }) {
-  const { arena, className } = props;
+type PlayerTheme = Partial<vis.NodeOptions>;
+
+type ArenaTheme = {
+  player0: PlayerTheme;
+  player1: PlayerTheme;
+};
+
+export function ArenaGraph(props: {
+  arena: GenericArena;
+  className?: string;
+  options?: ArenaTheme;
+}) {
+  const {
+    arena,
+    className,
+    options = {
+      player0: { color: "oklch(0.715 0.143 215.221)", shape: "circle" },
+      player1: {
+        color: "oklch(0.508 0.118 165.612)",
+        shape: "box",
+      },
+    },
+  } = props;
 
   return (
     <Graph
@@ -37,7 +58,7 @@ export function ArenaGraph(props: { arena: GenericArena; className?: string }) {
         title: v.id,
         fixed: false,
         label: v.id,
-        shape: v.player === 0 ? "circle" : "box",
+        ...options[`player${v.player}`],
       }))}
       edges={arena.edges.map(([from, to]) => ({
         id: `${from}-${to}`,
