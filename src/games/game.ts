@@ -1,12 +1,13 @@
-import { GenericCompiledArena, NeighborsOf, Player, Vertex } from "./arena";
+import { Arena, Edges, GenericCompiledArena, NeighborsOf, Player, Vertex } from "./arena";
 
-type WinCondition<V extends readonly Vertex[]> = (play: V[number][]) => Player
+type History<V extends readonly Vertex[]> = V[number][]
+type WinCondition<V extends readonly Vertex[]> = (play: History<V>) => Player
 
 export class Game<Data, V extends readonly Vertex<Data>[] = []> {
     arena: GenericCompiledArena<Data>
     currentState: V[number];
     winCondition: WinCondition<V>;
-    history: V[number][]
+    history: History<V>
 
     constructor(arena: typeof this.arena, initialState: V[number]['id'], winCondition: WinCondition<V>) {
         this.arena = arena
@@ -35,12 +36,10 @@ export class Game<Data, V extends readonly Vertex<Data>[] = []> {
 }
 
 
-// type ReachabilityData = { accepting: boolean }
-// export const createReachabilityGame = <V extends Vertex<ReachabilityData>[], E extends Edges>(v: V, e: E) => {
-//     const arena = new Arena<ReachabilityData, V, E>(v, e).compile()
-//     arena.add({ id: '1', player: 0, data: { accepting: true } })
-//     const neigh = arena.getNeighbors('1')
-//     const x = neigh[0]
+type ReachabilityData = { accepting: boolean }
+export const createReachabilityGame = (v: Vertex<ReachabilityData>[], e: Edges) => {
+    const arena = new Arena<ReachabilityData, Vertex<ReachabilityData>[], Edges>(v, e).compile()
 
-//     return new Game(arena, v[0].id, () => true)
-// }
+    return new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena, v[0].id, (h) =>
+        h.some(s => s.player === 0) ? 0 : 1)
+}
