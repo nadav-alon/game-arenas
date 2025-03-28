@@ -1,23 +1,8 @@
-import React, {
-  ComponentProps,
-  CSSProperties,
-  MouseEventHandler,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { ComponentProps, useMemo, useState } from "react";
 import "./App.css";
-import {
-  Arena,
-  GenericArena,
-  GenericCompiledArena,
-  Vertex,
-} from "./games/arena";
+import { Arena, GenericArena, GenericCompiledArena } from "./games/arena";
 import { z, ZodFormattedError } from "zod";
-import VertexComponent from "./vertex";
-import Xarrow from "react-xarrows";
-import { Graph } from "./vis-network/graph";
+import { ArenaGraph } from "./vis-network/graph";
 import { twMerge } from "tailwind-merge";
 
 const edgeSchema = z.tuple([z.string(), z.string()]);
@@ -26,28 +11,13 @@ function App() {
   const [arena, setArena] = useState<GenericCompiledArena>(new Arena());
 
   return (
-    <>
-      <ArenaForm finish={setArena}></ArenaForm>
-      <div className="bg-red-500">
-        {"hello "}
-        {arena.toString()}
-      </div>
-      <Graph
-        id="graph"
-        nodes={arena.vertices.map((v) => ({
-          id: v.id,
-          title: v.id,
-          fixed: false,
-          label: v.id,
-        }))}
-        edges={arena.edges.map(([from, to]) => ({
-          id: `${from}-${to}`,
-          from,
-          to,
-          arrows: "to",
-        }))}
-      ></Graph>
-    </>
+    <div className="h-screen w-screen p-5">
+      {!arena.compiled ? (
+        <ArenaForm finish={setArena}></ArenaForm>
+      ) : (
+        <ArenaGraph arena={arena} />
+      )}
+    </div>
   );
 }
 
@@ -57,18 +27,24 @@ function ArenaForm(props: {
   const [arena, setArena] = useState<GenericArena>(new Arena());
 
   return (
-    <div className="p-5 flex flex-col gap-2">
-      <VertexForm key="vertex-form" setArena={setArena} arena={arena} />
-      <EdgeForm key="edge-form" setArena={setArena} arena={arena} />
-      <button
-        type="button"
-        className="bg-blue-500! hover:bg-blue-600!"
-        onClick={() => props.finish(arena.compile())}
-      >
-        Finish Arena
-      </button>
-      Preview:
-      <ArenaPreview arena={arena} />
+    <div className="flex w-full h-full">
+      <div className="p-5 flex flex-col gap-2 h-full">
+        <VertexForm key="vertex-form" setArena={setArena} arena={arena} />
+        <EdgeForm key="edge-form" setArena={setArena} arena={arena} />
+        <button
+          type="button"
+          className="bg-blue-500! hover:bg-blue-600!"
+          onClick={() => props.finish(arena.compile())}
+        >
+          Finish Arena
+        </button>
+      </div>
+      <div className="flex-grow flex flex-col">
+        Preview:
+        <div className="flex-grow-2 border-4 border-blue-900 rounded-2xl">
+          <ArenaGraph arena={arena} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -232,122 +208,6 @@ function Errors(props: { errors?: string[] }) {
   return (
     <div className="min-h-4 text-red-300">
       {errors ? errors.join(", ") : null}
-    </div>
-  );
-}
-
-function ArenaPreview(props: { arena: GenericArena }) {
-  const { arena } = props;
-  const { vertices, edges } = arena;
-
-  const verticesRefs = useRef<
-    Record<(typeof vertices)[number]["id"], { current: HTMLDivElement | null }>
-  >({});
-
-  const [pinged, setPinged] = useState(
-    edges.map((e) => ({ e, ping: new Date() })),
-  );
-
-  useEffect(() => {
-    setPinged(edges.map((e) => ({ e, ping: new Date() })));
-  }, [edges]);
-
-  return (
-    <div className="">
-      {vertices.map((v) => (
-        <DraggableVertex
-          key={v.id}
-          verticesRefs={verticesRefs}
-          vertex={v}
-          ping={(v) => {
-            setPinged((prev) => {
-              return prev.map(({ e, ping: prevPing }) => {
-                if (e.includes(v.id)) return { e, ping: new Date() };
-                return { e, ping: prevPing };
-              });
-            });
-          }}
-        />
-      ))}
-
-      {edges.map(([v1, v2], i) => {
-        const ref1 = verticesRefs.current[v1];
-        const ref2 = verticesRefs.current[v2];
-        if (!ref1 || !ref2) return null;
-
-        return (
-          <Xarrow
-            key={`${v1}${v2}${pinged[i]?.ping.getTime()}`}
-            start={ref1}
-            end={ref2}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function useDragMousePosition() {
-  const [wasDragged, setWasDragged] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [pos, setPos] = useState({ x: NaN, y: NaN });
-
-  const style = useMemo<CSSProperties>(
-    () =>
-      wasDragged
-        ? { position: "absolute", left: pos.x, top: pos.y, cursor: "grab" }
-        : { cursor: "grab" },
-    [wasDragged, pos],
-  );
-
-  const onMouseDown: MouseEventHandler<HTMLDivElement> = (_e) => {
-    setWasDragged(true);
-    setDragging(true);
-  };
-
-  const onMouseMove: MouseEventHandler<HTMLDivElement> = (e) => {
-    if (dragging) {
-      setPos({ x: e.clientX - 50, y: e.clientY - 50 }); // Center the box
-    }
-  };
-
-  const onMouseUp: MouseEventHandler<HTMLDivElement> = (_e) => {
-    setDragging(false);
-  };
-
-  return { style, onMouseDown, onMouseMove, onMouseUp };
-}
-
-function DraggableVertex(props: {
-  vertex: Vertex;
-  verticesRefs: React.RefObject<
-    Record<
-      string,
-      {
-        current: HTMLDivElement | null;
-      }
-    >
-  >;
-  ping?: (v: Vertex) => void;
-}) {
-  const { vertex, ping, verticesRefs } = props;
-  const { onMouseMove, ...dragProps } = useDragMousePosition();
-
-  const wrappedOnMouseMove: typeof onMouseMove = (e) => {
-    onMouseMove(e);
-    ping?.(vertex);
-  };
-
-  return (
-    <div
-      className="m-5 w-fit bg-white"
-      {...dragProps}
-      onMouseMove={wrappedOnMouseMove}
-      ref={(el) => {
-        verticesRefs.current[vertex.id] = { current: el };
-      }}
-    >
-      <VertexComponent className="m-5" vertex={vertex} />
     </div>
   );
 }
