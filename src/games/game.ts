@@ -9,10 +9,10 @@ export class Game<Data, V extends readonly Vertex<Data>[] = []> {
     winCondition: (this: typeof this, play: History<V>) => Player
     history: History<V>
 
-    constructor(arena: typeof this.arena, initialState: V[number]['id'], winCondition: typeof this.winCondition) {
+    constructor(arena: typeof this.arena, initialState: V[number]['id']) {
         this.arena = arena
         this.currentState = this.arena.get(initialState)
-        this.winCondition = winCondition
+        this.winCondition = () => { throw Error('unimplemented') }
         this.history = [this.currentState]
     }
 
@@ -41,8 +41,12 @@ type ReachabilityGame = Game<ReachabilityData, Vertex<ReachabilityData>[]>
 export const createReachabilityGame = (v: Vertex<ReachabilityData>[], e: Edges): ReachabilityGame => {
     const arena = new Arena<ReachabilityData, Vertex<ReachabilityData>[], Edges>(v, e).compile()
 
-    return new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena, v[0].id, (h) =>
-        h.some(s => s.player === 0) ? 0 : 1)
+    const game = new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena, v[0].id)
+
+    game.winCondition = (h) =>
+        h.some(s => s.player === 0) ? 0 : 1
+
+    return game
 }
 
 const generateStrategyFromHistory = <V extends Vertex<ReachabilityData>[]>(h: History<V>) => {
@@ -97,15 +101,18 @@ const loopStates = (game: ReachabilityGame, strategy: Map<VertexId, VertexId>): 
 export const createBuchiGame = (v: Vertex<ReachabilityData>[], e: Edges) => {
     const arena = new Arena<ReachabilityData, Vertex<ReachabilityData>[], Edges>(v, e).compile()
 
-    function hhh(this: Game<ReachabilityData, Vertex<ReachabilityData>[]>, h: typeof this.history) {
+    function winCondition<G extends Game<ReachabilityData, Vertex<ReachabilityData>[]>>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
         const loop = loopStates(this, strategy)
 
         return loop.some(s => s.player === 0) ? 0 : 1
     }
 
-    return new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena,
+    const game = new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena,
         v[0].id,
-        hhh
     )
+    game.winCondition = winCondition
+
+    return game
+
 }
