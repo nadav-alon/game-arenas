@@ -1,11 +1,11 @@
-import { Arena, Edges, GenericCompiledArena, NeighborsOf, Player, Vertex, VertexId } from "./arena";
+import { Arena, Edges, GenericArena, GenericCompiledArena, NeighborsOf, Player, Vertex, VertexId } from "./arena";
 
 type History<V extends readonly Vertex[]> = V[number][]
 
-type GenericGame<Data> = Game<Data, Vertex<Data>[]>
+export type GenericGame<Data> = Game<Data, Vertex<Data>[]>
 
-export class Game<Data, V extends readonly Vertex<Data>[] = []> {
-    arena: GenericCompiledArena<Data>
+export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = []> {
+    arena: Arena<Data, V, E, true>
     currentState: V[number];
     winCondition: (this: typeof this, play: History<V>) => Player
     history: History<V>
@@ -37,12 +37,13 @@ export class Game<Data, V extends readonly Vertex<Data>[] = []> {
 }
 
 
-type ReachabilityData = { accepting: boolean }
-type ReachabilityGame = Game<ReachabilityData, Vertex<ReachabilityData>[]>
-export const createReachabilityGame = (v: Vertex<ReachabilityData>[], e: Edges): ReachabilityGame => {
-    const arena = new Arena<ReachabilityData, Vertex<ReachabilityData>[], Edges>(v, e).compile()
+export type ReachabilityData = { accepting: boolean }
+export type ReachabilityGame = GenericGame<ReachabilityData>
+export const createReachabilityGame = <V extends Vertex<ReachabilityData>[], E extends Edges>(a: Arena<ReachabilityData, V, E>) => {
+    const arena = a.compile()
+    const { vertices: v } = arena
 
-    const game = new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena, v[0].id)
+    const game = new Game(arena, v[0].id)
 
     game.winCondition = (h) =>
         h.some(s => s.player === 0) ? 0 : 1
@@ -98,32 +99,39 @@ const loopStates = <D, G extends GenericGame<D>>(game: G, strategy: Map<VertexId
     }
 }
 
+export type BuchiData = ReachabilityData
+export type BuchiGame = GenericGame<BuchiData>
 
-export const createBuchiGame = (v: Vertex<ReachabilityData>[], e: Edges) => {
-    const arena = new Arena<ReachabilityData, Vertex<ReachabilityData>[], Edges>(v, e).compile()
+export const createBuchiGame = (
+    a: GenericArena<BuchiData>) => {
 
-    function winCondition<G extends Game<ReachabilityData, Vertex<ReachabilityData>[]>>(this: G, h: typeof this.history) {
+    const arena = a.compile()
+    const { vertices: v } = arena
+
+    function winCondition<G extends BuchiGame>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
         const loop = loopStates<ReachabilityData, G>(this, strategy)
 
         return loop.some(s => s.data?.accepting) ? 0 : 1
     }
 
-    const game = new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena,
-        v[0].id,
-    )
+    const game = new Game(arena, v[0].id,)
+
     game.winCondition = winCondition
 
     return game
 
 }
 
-type ParityData = { color: number }
+export type ParityData = { color: number }
+export type ParityGame = GenericGame<ParityData>
 
-export const createParityGame = (v: Vertex<ParityData>[], e: Edges) => {
-    const arena = new Arena<ParityData, Vertex<ParityData>[], Edges>(v, e).compile()
+export const createParityGame = (
+    a: GenericArena<ParityData>): ParityGame => {
+    const arena = a.compile()
+    const { vertices: v } = arena
 
-    function winCondition<G extends Game<ParityData, Vertex<ParityData>[]>>(this: G, h: typeof this.history) {
+    function winCondition<G extends ParityGame>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
         const loop = loopStates<ParityData, G>(this, strategy)
 
