@@ -2,6 +2,7 @@ import { Arena, Edges, GenericCompiledArena, NeighborsOf, Player, Vertex, Vertex
 
 type History<V extends readonly Vertex[]> = V[number][]
 
+type GenericGame<Data> = Game<Data, Vertex<Data>[]>
 
 export class Game<Data, V extends readonly Vertex<Data>[] = []> {
     arena: GenericCompiledArena<Data>
@@ -49,7 +50,7 @@ export const createReachabilityGame = (v: Vertex<ReachabilityData>[], e: Edges):
     return game
 }
 
-const generateStrategyFromHistory = <V extends Vertex<ReachabilityData>[]>(h: History<V>) => {
+const generateStrategyFromHistory = <V extends Vertex<unknown>[]>(h: History<V>) => {
     const strategy: Map<VertexId, VertexId> = new Map()
 
     h.slice(0, h.length).forEach((s, i) => {
@@ -59,7 +60,7 @@ const generateStrategyFromHistory = <V extends Vertex<ReachabilityData>[]>(h: Hi
     return strategy
 }
 
-const nextState = (game: ReachabilityGame, strategy: Map<VertexId, VertexId>, currentState: Vertex) => {
+const nextState = <Data>(game: GenericGame<Data>, strategy: Map<VertexId, VertexId>, currentState: Vertex) => {
 
     const nextState = strategy.get(currentState.id)
 
@@ -69,7 +70,7 @@ const nextState = (game: ReachabilityGame, strategy: Map<VertexId, VertexId>, cu
     return game.arena.get(nextState)
 }
 
-const strategyLoopStartpoint = (game: ReachabilityGame, strategy: Map<VertexId, VertexId>) => {
+const strategyLoopStartpoint = <Data>(game: GenericGame<Data>, strategy: Map<VertexId, VertexId>) => {
     const visitedVertices = new Set<VertexId>()
     let currentState = game.currentState
 
@@ -83,8 +84,8 @@ const strategyLoopStartpoint = (game: ReachabilityGame, strategy: Map<VertexId, 
     }
 }
 
-const loopStates = (game: ReachabilityGame, strategy: Map<VertexId, VertexId>): Vertex<ReachabilityData>[] => {
-    const ret: Set<Vertex<ReachabilityData>> = new Set()
+const loopStates = <D, G extends GenericGame<D>>(game: G, strategy: Map<VertexId, VertexId>): Vertex<D>[] => {
+    const ret: Set<Vertex<D>> = new Set()
 
     let currentState = game.arena.get(strategyLoopStartpoint(game, strategy))
 
@@ -103,9 +104,9 @@ export const createBuchiGame = (v: Vertex<ReachabilityData>[], e: Edges) => {
 
     function winCondition<G extends Game<ReachabilityData, Vertex<ReachabilityData>[]>>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
-        const loop = loopStates(this, strategy)
+        const loop = loopStates<ReachabilityData, G>(this, strategy)
 
-        return loop.some(s => s.player === 0) ? 0 : 1
+        return loop.some(s => s.data?.accepting) ? 0 : 1
     }
 
     const game = new Game<ReachabilityData, Vertex<ReachabilityData>[]>(arena,
@@ -115,4 +116,24 @@ export const createBuchiGame = (v: Vertex<ReachabilityData>[], e: Edges) => {
 
     return game
 
+}
+
+type ParityData = { color: number }
+
+export const createParityGame = (v: Vertex<ParityData>[], e: Edges) => {
+    const arena = new Arena<ParityData, Vertex<ParityData>[], Edges>(v, e).compile()
+
+    function winCondition<G extends Game<ParityData, Vertex<ParityData>[]>>(this: G, h: typeof this.history) {
+        const strategy = generateStrategyFromHistory(h)
+        const loop = loopStates<ParityData, G>(this, strategy)
+
+        return Math.min(...loop.map(s => s.data?.color ?? Infinity)) % 2 as Player
+    }
+
+    const game = new Game<ParityData, Vertex<ParityData>[]>(arena,
+        v[0].id,
+    )
+    game.winCondition = winCondition
+
+    return game
 }
