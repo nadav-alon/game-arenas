@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { createReachabilityGame, ReachabilityData, ReachabilityGame } from "./game";
-import { Arena, GenericArena } from "./arena";
+import { Arena } from "./arena";
 
 describe('Game', () => {
     describe('Reachability', () => {
@@ -8,10 +8,12 @@ describe('Game', () => {
             const arena = new Arena<ReachabilityData>().addP0('1', { accepting: false }).addP1('2', { accepting: false }).addEdge('1', '2')
             const game = createReachabilityGame(arena)
 
-            expectTypeOf(game).toEqualTypeOf<ReachabilityGame>()
+            expectTypeOf(game).toExtend<ReachabilityGame>()
 
             expect(game.currentState).toMatchObject({ player: 0, id: '1', data: { accepting: false } })
-            game.play('')
+            const game_ = game.play('2')
+
+
 
         })
         it.todo('Correct winning strategy', () => { })

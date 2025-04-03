@@ -1,34 +1,44 @@
-import { Arena, Edges, GenericArena, GenericCompiledArena, NeighborsOf, Player, Vertex, VertexId } from "./arena";
+import { Arena, Edges, GenericArena, NeighborsOf, Player, Vertex, VertexId } from "./arena";
 
 type History<V extends readonly Vertex[]> = V[number][]
 
-export type GenericGame<Data> = Game<Data, Vertex<Data>[]>
+export type GenericGame<Data> = Game<Data, Vertex<Data>[], Edges>
 
-export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = []> {
+export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = [], C extends V[number] = V[0]> {
     arena: Arena<Data, V, E, true>
-    currentState: V[number];
+    currentState: C
     winCondition: (this: typeof this, play: History<V>) => Player
     history: History<V>
 
     constructor(arena: typeof this.arena, initialState: V[number]['id']) {
         this.arena = arena
-        this.currentState = this.arena.get(initialState)
+        this.currentState = this.arena.get(initialState) as C
         this.winCondition = () => { throw Error('unimplemented') }
         this.history = [this.currentState]
+    }
+
+    clone() {
+        const clone = new Game<Data, V, E, typeof this.currentState>(this.arena, this.currentState.id)
+        clone.winCondition = this.winCondition as typeof clone.winCondition
+        clone.history = [...this.history]
+        return clone
     }
 
     getCurrentPlayer(): Player {
         return this.currentState.player
     }
 
-    play<CurV extends typeof this.currentState.id>(choice: NeighborsOf<CurV, typeof this.arena.vertices, typeof this.arena.edges>[number]) {
+    play<CurV extends C>(choice: NeighborsOf<CurV['id'], V, E>[number]) {
         const newState = this.arena.getNeighbors(this.currentState.id).find(n => n === choice)
         if (!newState) {
             throw new Error('cannot play this choice')
         }
 
-        this.currentState = this.arena.get(newState)
+        const newStateVertex = this.arena.get(newState)
+        this.currentState = newStateVertex as C
         this.history.push(this.currentState)
+
+        return this.clone() as unknown as Game<Data, V, E, typeof newStateVertex>
     }
 
     getCurrentWinner() {
@@ -115,7 +125,7 @@ export const createBuchiGame = (
         return loop.some(s => s.data?.accepting) ? 0 : 1
     }
 
-    const game = new Game(arena, v[0].id,)
+    const game = new Game(arena, v[0].id)
 
     game.winCondition = winCondition
 
@@ -127,7 +137,7 @@ export type ParityData = { color: number }
 export type ParityGame = GenericGame<ParityData>
 
 export const createParityGame = (
-    a: GenericArena<ParityData>): ParityGame => {
+    a: GenericArena<ParityData>) => {
     const arena = a.compile()
     const { vertices: v } = arena
 
@@ -138,7 +148,7 @@ export const createParityGame = (
         return Math.min(...loop.map(s => s.data?.color ?? Infinity)) % 2 as Player
     }
 
-    const game = new Game<ParityData, Vertex<ParityData>[]>(arena,
+    const game = new Game<ParityData, Vertex<ParityData>[], Edges>(arena,
         v[0].id,
     )
     game.winCondition = winCondition
