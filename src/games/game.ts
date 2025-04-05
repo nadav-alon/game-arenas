@@ -35,10 +35,11 @@ export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges 
         }
 
         const newStateVertex = this.arena.get(newState)
-        this.currentState = newStateVertex as C
-        this.history.push(this.currentState)
+        const clone = this.clone()
+        clone.currentState = newStateVertex as C
+        clone.history.push(clone.currentState)
 
-        return this.clone() as unknown as Game<Data, V, E, typeof newStateVertex>
+        return clone as unknown as Game<Data, V, E, typeof newStateVertex>
     }
 
     getCurrentWinner() {
@@ -56,7 +57,7 @@ export const createReachabilityGame = <V extends Vertex<ReachabilityData>[], E e
     const game = new Game(arena, v[0].id)
 
     game.winCondition = (h) =>
-        h.some(s => s.player === 0) ? 0 : 1
+        h.some(s => s.data?.accepting) ? 0 : 1
 
     return game
 }
