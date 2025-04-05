@@ -1,6 +1,14 @@
 import { IsTuple } from "./type-utils";
 
 export type Player = 0 | 1;
+export function isPlayer(i: unknown): i is Player {
+  return i === 0 || i === 1
+}
+
+export function otherPlayer(i: Player): Player {
+  return 1 - i as Player
+}
+
 export type VertexId = string
 export type Vertex<Data = unknown> = { id: VertexId, player: Player, data?: Data }
 export type VertexIds = readonly VertexId[]
@@ -10,12 +18,20 @@ export type Edges = readonly Edge[]
 export type GenericArena<Data = unknown> = Arena<Data, Vertex<Data>[], Edges, boolean>
 export type GenericCompiledArena<Data = unknown> = Arena<Data, Vertex<Data>[], Edges, true>
 
+type CompiledData<Data, V extends readonly Vertex<Data>[] = [],
+  // E extends Edges = [],
+  C extends boolean = false> = C extends false ? null : {
+    v0: V[number][]
+    v1: V[number][]
+  }
+
 export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = [], C extends boolean = false> {
   compiled: C
   vertices: V;
   edges: E;
   map: C extends true ? Map<V[number]['id'], V[number]> : never
   adjacencyList: C extends true ? Map<V[number]['id'], V[number]['id'][]> : never
+  compiledData: CompiledData<Data, V, C>;
 
   constructor(vertices: V = [] as unknown as V, edges: E = [] as unknown as E) {
     this.vertices = vertices
@@ -23,6 +39,7 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     this.compiled = false as C
     this.map = { get() { throw new Error('No Map') } } as never
     this.adjacencyList = { get() { throw new Error('No Adjacency List') } } as never
+    this.compiledData = null as CompiledData<Data, V, C>
   }
 
   toString() {
@@ -94,6 +111,12 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     const ret = this as Arena<Data, V, E, true>;
     ret._setMap(map);
     ret.adjacencyList = adjacencyList;
+
+
+    ret.compiledData = {
+      v0: ret.vertices.filter(v => v.player === 0),
+      v1: ret.vertices.filter(v => v.player === 1)
+    }
     return ret;
   }
 
@@ -111,7 +134,7 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     const newVertices = this.vertices.filter(v => subVertices.includes(v.id)) as SpecificVerticesOf<NewVert, V>
     const newEdges = this.edges.filter(e => subVertices.includes(e[0]) && subVertices.includes(e[1])) as EdgesThatStartAndEndAtVertices<NewVert, E>
 
-    const ret = new Arena(newVertices, newEdges).compile()
+    const ret = new Arena<Data, typeof newVertices, typeof newEdges>(newVertices, newEdges).compile()
 
     // some new Vertex doesnt have a successor
     if (newVertices.some(v => {
@@ -119,6 +142,33 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     })) throw new Error('Invalid sub-arena')
 
     return ret
+  }
+
+  getPlayerVertices(i: Player) {
+    return this.compiledData?.[`v${i}`] ?? this.vertices.filter(v => v.player === i)
+  }
+
+  getAttractor(i: Player, r: V[number][]) {
+    throw new Error('Not implemented')
+  }
+
+  controlledPredecessor(i: Player, r: V[number]['id'][]) {
+    const vPlayer = this.getPlayerVertices(i)
+    const vOtherPlayer = this.getPlayerVertices(otherPlayer(i))
+
+    const playerCanChoose = vPlayer.filter(v => {
+      const successors = this.getNeighbors(v.id)
+      return successors.some(vTag => r.includes(vTag))
+    }
+    )
+
+    const otherPlayerMustChoose = vOtherPlayer.filter(v => {
+      const successors = this.getNeighbors(v.id)
+      return successors.every(vTag => r.includes(vTag))
+    }
+    )
+
+    return [...playerCanChoose, ...otherPlayerMustChoose].map(v => v.id)
   }
 
 }
@@ -209,28 +259,3 @@ type EdgesThatStartAndEndAtVertices<V extends VertexIds, Edges_ extends Edges> =
   EdgesThatContainVertices<V, EdgesThatContainVertices<V, Edges_, 1>, 0> :
   Edges_
 
-
-// const a = new Arena().addP0('q1').addP1('q2').addEdge("q1", "q2").addP0('q3').addEdge("q2", "q1").addEdge("q2", "q3").addEdge("q3", "q1").compile()
-
-
-
-// const aNeighbors = a.getNeighbors('q2')
-
-// type h = SpecificVerticesOf<['q1', 'q2'], typeof a.vertices>
-// //   ^?
-// type hh = EdgesThatStartAndEndAtVertices<['q1', 'q2'], typeof a.edges>
-// //   ^?
-
-// type xxx = EdgesThatContainVertex<'q2', typeof a.edges, 0>
-// //   ^?
-// type xxxx = EdgesThatContainVertex<'q2', typeof a.edges, 1>
-// //   ^?
-
-// type hhh = EdgesThatContainVertices<['q1', 'q2'], typeof a.edges, 0>
-// //   ^?
-// type hhhh = EdgesThatContainVertices<['q1', 'q2'], typeof a.edges, 1>
-// //   ^?
-
-
-// const subArena = a.subArena<['q1','q2']>(['q1','q2'])
-// const subArena2 = a.subArena(['q1','q2'] as const)
