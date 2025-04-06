@@ -63,10 +63,12 @@ describe('Arena', () => {
 
             expect(subArena.edges).toEqual(expect.arrayContaining([['0', '1'], ['1', '0']]))
             expect(subArena.edges.length).toBe(2)
-
         })
 
+        it.todo('Controlled Predescessor')
+        it.todo('Attractor')
     })
+
     describe('Type Tests', () => {
         describe('Constant', () => {
             describe('Building', () => {
