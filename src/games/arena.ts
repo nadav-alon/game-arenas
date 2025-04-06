@@ -149,7 +149,13 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
   }
 
   getAttractor(i: Player, r: V[number][]) {
-    throw new Error('Not implemented')
+    return this.getNthAttractor(i, this.vertices.length, r)
+  }
+
+  getNthAttractor(i: Player, n: number, r: V[number][]): V[number]['id'][] {
+    if (n === 0) return r.map(v => v.id)
+    const hello = this.getNthAttractor(i, n - 1, r)
+    return [...hello, ...this.controlledPredecessor(i, hello)]
   }
 
   controlledPredecessor(i: Player, r: V[number]['id'][]) {
@@ -168,7 +174,7 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     }
     )
 
-    return [...playerCanChoose, ...otherPlayerMustChoose].map(v => v.id)
+    return [...playerCanChoose, ...otherPlayerMustChoose].map(v => v.id) as V[number]['id'][]
   }
 
 }
