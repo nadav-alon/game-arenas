@@ -1,6 +1,6 @@
 import { Vertex, Edges, Player, GenericArena } from "../arena";
 import { Game, GenericGame } from "../game";
-import { generateStrategyFromHistory, loopStates } from "./utils";
+import { generateStrategyFromHistory, Strategy, strategyLoopStates } from "./utils";
 
 export type ParityData = { color: number }
 export type ParityGame = GenericGame<ParityData>
@@ -12,7 +12,7 @@ export const createParityGame = (
 
     function winCondition<G extends ParityGame>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
-        const loop = loopStates<ParityData, G>(this, strategy)
+        const loop = strategyLoopStates<ParityData, G>(this, strategy)
 
         return Math.min(...loop.map(s => s.data?.color ?? Infinity)) % 2 as Player
     }
@@ -23,4 +23,8 @@ export const createParityGame = (
     game.winCondition = winCondition
 
     return game
+}
+
+export const solveParityGame = (game: ParityGame): Strategy => {
+    throw new Error('unimplemented')
 }

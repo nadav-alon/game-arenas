@@ -1,8 +1,10 @@
 import { Vertex, VertexId } from "../arena";
 import { History, GenericGame } from "../game";
 
+export type Strategy = Map<VertexId, VertexId>
+
 export const generateStrategyFromHistory = <V extends Vertex<unknown>[]>(h: History<V>) => {
-    const strategy: Map<VertexId, VertexId> = new Map()
+    const strategy: Strategy = new Map()
 
     h.slice(0, h.length).forEach((s, i) => {
         strategy.set(s.id, h[i + 1].id)
@@ -11,7 +13,7 @@ export const generateStrategyFromHistory = <V extends Vertex<unknown>[]>(h: Hist
     return strategy
 }
 
-export const nextState = <Data>(game: GenericGame<Data>, strategy: Map<VertexId, VertexId>, currentState: Vertex) => {
+export const nextStateByStrategy = <Data>(game: GenericGame<Data>, strategy: Strategy, currentState: Vertex) => {
 
     const nextState = strategy.get(currentState.id)
 
@@ -21,7 +23,7 @@ export const nextState = <Data>(game: GenericGame<Data>, strategy: Map<VertexId,
     return game.arena.get(nextState)
 }
 
-export const strategyLoopStartpoint = <Data>(game: GenericGame<Data>, strategy: Map<VertexId, VertexId>) => {
+export const strategyLoopStartpoint = <Data>(game: GenericGame<Data>, strategy: Strategy) => {
     const visitedVertices = new Set<VertexId>()
     let currentState = game.currentState
 
@@ -31,11 +33,11 @@ export const strategyLoopStartpoint = <Data>(game: GenericGame<Data>, strategy: 
 
         visitedVertices.add(currentState.id)
 
-        currentState = nextState(game, strategy, currentState)
+        currentState = nextStateByStrategy(game, strategy, currentState)
     }
 }
 
-export const loopStates = <D, G extends GenericGame<D>>(game: G, strategy: Map<VertexId, VertexId>): Vertex<D>[] => {
+export const strategyLoopStates = <D, G extends GenericGame<D>>(game: G, strategy: Strategy): Vertex<D>[] => {
     const ret: Set<Vertex<D>> = new Set()
 
     let currentState = game.arena.get(strategyLoopStartpoint(game, strategy))
@@ -45,6 +47,6 @@ export const loopStates = <D, G extends GenericGame<D>>(game: G, strategy: Map<V
 
         ret.add(currentState)
 
-        currentState = nextState(game, strategy, currentState)
+        currentState = nextStateByStrategy(game, strategy, currentState)
     }
 }

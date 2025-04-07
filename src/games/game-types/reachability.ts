@@ -1,5 +1,6 @@
 import { Vertex, Edges, Arena } from "../arena";
 import { Game, GenericGame } from "../game";
+import { Strategy } from "./utils";
 
 export type ReachabilityData = { accepting: boolean }
 export type ReachabilityGame = GenericGame<ReachabilityData>
@@ -13,4 +14,8 @@ export const createReachabilityGame = <V extends Vertex<ReachabilityData>[], E e
         h.some(s => s.data?.accepting) ? 0 : 1
 
     return game
+}
+
+export const solveReachabilityGame = (game: ReachabilityGame): Strategy => {
+    throw new Error('unimplemented')
 }

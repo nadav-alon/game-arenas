@@ -1,7 +1,7 @@
 import { GenericArena } from "../arena";
 import { Game, GenericGame } from "../game";
 import { ReachabilityData } from "./reachability";
-import { generateStrategyFromHistory, loopStates } from "./utils";
+import { generateStrategyFromHistory, Strategy, strategyLoopStates } from "./utils";
 
 
 export type BuchiData = ReachabilityData
@@ -15,7 +15,7 @@ export const createBuchiGame = (
 
     function winCondition<G extends BuchiGame>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
-        const loop = loopStates<ReachabilityData, G>(this, strategy)
+        const loop = strategyLoopStates<ReachabilityData, G>(this, strategy)
 
         return loop.some(s => s.data?.accepting) ? 0 : 1
     }
@@ -26,4 +26,8 @@ export const createBuchiGame = (
 
     return game
 
+}
+
+export const solveBuchiGame = (game: BuchiGame): Strategy => {
+    throw new Error('unimplemented')
 }
