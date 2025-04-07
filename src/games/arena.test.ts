@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { Arena, GenericArena, GenericCompiledArena, Vertex, VertexId } from './arena'
+import { Arena, GenericArena, GenericCompiledArena, Player, Vertex, VertexId } from './arena'
 
 describe('Arena', () => {
     describe('Build Arena', () => {
@@ -65,7 +65,45 @@ describe('Arena', () => {
             expect(subArena.edges.length).toBe(2)
         })
 
-        it.todo('Controlled Predescessor')
+        describe('Controlled Predescessor', () => {
+            it('Circle Graph', () => {
+                const NUMBER = 10
+
+                let arena = new Arena() as GenericArena
+
+                const nodes = Array.from({ length: NUMBER }).map((_, i) => i.toString())
+
+                nodes.forEach((node, index) => {
+                    const prevNode = (index - 1).toString()
+                    arena = arena.add({ id: index.toString(), player: index % 2 as Player })
+
+                    if (index > 0)
+                        arena = arena.addEdge(prevNode, node)
+                })
+                arena = arena.addEdge((NUMBER - 1).toString(), '0')
+
+                nodes.forEach((node, index) => {
+                    const prevNode = (index - 1).toString()
+
+                    if (index > 0)
+                        expect(arena.controlledPredecessor(0, [node])).toMatchObject([prevNode])
+                    else
+                        expect(arena.controlledPredecessor(0, [node]), `${node}'s predecessor does not match`).toMatchObject(['9'])
+
+                })
+            })
+            it('Source', () => {
+                const NUMBER = 10
+                let arena = new Arena().addP0('source').addEdge('source', 'source') as unknown as GenericArena
+                const nodes = Array.from({ length: NUMBER }).map((_, i) => i.toString())
+
+                nodes.forEach((node, index) => {
+                    arena = arena.add({ id: node, player: index % 2 as Player }).addEdge('source', node)
+                })
+
+                arena = arena.compile()
+            })
+        })
         it.todo('Attractor')
     })
 
