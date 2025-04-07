@@ -97,11 +97,18 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     this.map = m
   }
 
+  /**
+   * throws if arena is not valid
+   */
+  validate() {
+    if (this.vertices.some(v => {
+      return (this.getNeighbors(v.id) as unknown[]).length === 0
+    })) throw new Error('Invalid arena')
+  }
+
   /** freezes arena and adds map and adjecency list for more optimized queries */
   compile() {
-    if (this.vertices.some(v => {
-      return (ret.getNeighbors(v.id) as unknown[]).length === 0
-    })) throw new Error('Invalid arena')
+    this.validate()
 
     this.compiled = true as C;
     const map = new Map<V[number]['id'], V[number]>(this.vertices.map(v => [v.id, v]));

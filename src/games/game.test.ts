@@ -4,7 +4,7 @@ import { Arena } from "./arena";
 
 describe('Game', () => {
     it('Plays correctly', () => {
-        const arena = new Arena<ReachabilityData>().addP0('1', { accepting: false }).addP1('2', { accepting: true }).addEdge('1', '2')
+        const arena = new Arena<ReachabilityData>().addP0('1', { accepting: false }).addP1('2', { accepting: true }).addEdge('1', '2').addEdge('2', '1')
 
         const game = createReachabilityGame(arena)
         expect(game.currentState).toMatchObject({ player: 0, id: '1', data: { accepting: false } })

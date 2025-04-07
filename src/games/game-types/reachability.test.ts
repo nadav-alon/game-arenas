@@ -4,7 +4,7 @@ import { createReachabilityGame, ReachabilityData } from "./reachability"
 
 describe('Reachability', () => {
     it('Plays correctly', () => {
-        const arena = new Arena<ReachabilityData>().addP0('1', { accepting: false }).addP1('2', { accepting: true }).addEdge('1', '2')
+        const arena = new Arena<ReachabilityData>().addP0('1', { accepting: false }).addP1('2', { accepting: true }).addEdge('1', '2').addEdge('2', '1')
 
         const game = createReachabilityGame(arena)
         expect(game.getCurrentWinner()).toBe(1)

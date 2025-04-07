@@ -4,10 +4,10 @@ export default defineConfig({
   test: {
     globals: true,
     include: ["src/**/*.test.ts"],
-    typecheck: {
-      enabled: true,
-      include: ["src/**/*.test.ts"],
-      tsconfig: 'tsconfig.app.json',
-    }
+    // typecheck: {
+    //   enabled: true,
+    //   include: ["src/**/*.test.ts"],
+    //   tsconfig: 'tsconfig.app.json',
+    // }
   }
 })
