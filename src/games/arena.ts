@@ -159,17 +159,34 @@ export class Arena<Data, V extends readonly Vertex<Data>[] = [], E extends Edges
     return this.compiledData?.[`v${i}`] ?? this.vertices.filter(v => v.player === i)
   }
 
-  getAttractor(i: Player, r: V[number][]) {
+  getAttractor(i: Player, r: readonly V[number]['id'][]) {
     return this.getNthAttractor(i, this.vertices.length, r)
   }
 
-  getNthAttractor(i: Player, n: number, r: V[number][]): V[number]['id'][] {
-    if (n === 0) return r.map(v => v.id)
-    const hello = this.getNthAttractor(i, n - 1, r)
-    return [...hello, ...this.controlledPredecessor(i, hello)]
+  getNthAttractor(i: Player, n: number, r: readonly V[number]['id'][]): { attractor: readonly V[number]['id'][], distMap: Map<VertexId, number> } {
+
+    if (n === 0) {
+      const distMap = new Map()
+      r.forEach(v => {
+        distMap.set(v, 0)
+      })
+      return { attractor: r, distMap }
+    }
+
+    const { attractor: previousAttractor, distMap: previousDistMap } = this.getNthAttractor(i, n - 1, r)
+    const nthDistMap = new Map(previousDistMap)
+
+    const NthAttractor = [...previousAttractor, ...this.controlledPredecessor(i, previousAttractor)]
+    NthAttractor.forEach(v => {
+      if (nthDistMap.has(v)) return
+
+      nthDistMap.set(v, n)
+    })
+
+    return { attractor: NthAttractor, distMap: nthDistMap }
   }
 
-  controlledPredecessor(i: Player, r: V[number]['id'][]) {
+  controlledPredecessor(i: Player, r: readonly V[number]['id'][]) {
     const vPlayer = this.getPlayerVertices(i)
     const vOtherPlayer = this.getPlayerVertices(otherPlayer(i))
 
