@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest"
 import { Arena } from "../arena"
-import { createReachabilityGame, ReachabilityData } from "./reachability"
+import { createReachabilityGame, ReachabilityData, ReachabilityGame, solveReachabilityGame } from "./reachability"
+import { assertWinningStrategy } from "./test-utils"
 
 describe('Reachability', () => {
     it('Plays correctly', () => {
@@ -15,5 +16,16 @@ describe('Reachability', () => {
 
         expect(game_.getCurrentWinner()).toBe(0)
     })
-    it.todo('Correct winning strategy', () => { })
+    it('Correct winning strategy', () => {
+
+        const arena = new Arena<ReachabilityData>().addP0('1').addP1('2').addP1('3').addP0('4').addP1('5', { accepting: true }).addP0('6').addEdge('1', '2').addEdge('1', '3').addEdge('2', '1').addEdge('2', '4').addEdge('3', '5').addEdge('3', '6').addEdge('4', '2').addEdge('5', '1').addEdge('6', '2').addEdge('6', '5')
+
+        const game = createReachabilityGame(arena) as unknown as ReachabilityGame
+
+        const strategy = solveReachabilityGame(game)
+        assertWinningStrategy(game, strategy, 0)
+    })
 })
+
+
+

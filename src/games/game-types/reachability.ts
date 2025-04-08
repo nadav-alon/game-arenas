@@ -1,4 +1,4 @@
-import { Vertex, Edges, Arena, VertexIds } from "../arena";
+import { Vertex, Edges, Arena, VertexIds, VertexId } from "../arena";
 import { Game, GenericGame } from "../game";
 import { Strategy } from "./utils";
 
@@ -30,7 +30,7 @@ export const solveReachabilityGame = (game: ReachabilityGame): Strategy => {
         switch (vertex.player) {
             case 0:
                 const neighbors = game.arena.getNeighbors(v)
-                const neighborsWithDistance = neighbors.map(v => ({ v, weight: distMap.get(v) }))
+                const neighborsWithDistance = neighbors.map(v => ({ v, weight: distMap.get(v) })).filter((x): x is ElWithWeight<VertexId> => x.weight !== undefined)
                 const minNeighbor = findMinWeightElement(neighborsWithDistance)
 
                 if (minNeighbor === undefined) throw Error('No successor with distance found')
@@ -46,11 +46,10 @@ export const solveReachabilityGame = (game: ReachabilityGame): Strategy => {
     return strategy
 }
 
-type ElWithWeight<V> = { v: V, weight?: number }
+type ElWithWeight<V = unknown> = { v: V, weight: number }
 const findMinWeightElement = <V>(arr: ElWithWeight<V>[]) => {
     return arr.reduce((prevMin, currentElement) => {
-        if (prevMin === undefined || prevMin.weight === undefined) return currentElement
-        if (currentElement.weight === undefined) return prevMin
+        if (prevMin === undefined) return currentElement
 
         if (prevMin.weight > currentElement.weight) return currentElement
 
