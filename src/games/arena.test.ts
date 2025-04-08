@@ -100,6 +100,7 @@ describe('Arena', () => {
 
                 })
             })
+            it.todo('Complex Example')
         })
         it.todo('Attractor')
     })
