@@ -10,14 +10,14 @@ describe('Game Utils', () => {
     it('Options Combinations', () => {
         const options = [{ id: '1', options: [1, 2] }, { id: '2', options: [4, 5] }]
         const combinations = optionsCombinations(options)
-        const expected = [[
-            { id: '1', option: 1 }, { id: '2', option: 4 },
-            { id: '1', option: 2 }, { id: '2', option: 4 },
-            { id: '1', option: 1 }, { id: '2', option: 5 },
-            { id: '1', option: 2 }, { id: '2', option: 5 },
-        ]]
-        expect(combinations).toHaveLength(expect.length)
+        const expected = [
+            [{ id: '1', option: 1 }, { id: '2', option: 4 },],
+            [{ id: '1', option: 2 }, { id: '2', option: 4 },],
+            [{ id: '1', option: 1 }, { id: '2', option: 5 },],
+            [{ id: '1', option: 2 }, { id: '2', option: 5 },]
+        ]
         expect(combinations).toEqual(expect.arrayContaining(expected))
+        expect(combinations).toHaveLength(expected.length)
 
     })
 })

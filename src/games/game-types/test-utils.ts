@@ -67,14 +67,15 @@ function* bitIndexGenerator(n: number): Generator<number[]> {
         yield indices
     }
 }
-
 export const optionsCombinations = <I, T>(optionsToCombine: { id: I; options: T[] }[]): { id: I, option: T }[][] => {
     const [first, ...rest] = optionsToCombine
-    if (rest.length === 0) return [first.options.map(option => ({ id: first.id, option }))]
+    const firstOptions = first.options.map(option => ([{ id: first.id, option }]))
+    if (rest.length === 0) return firstOptions
+
     const restCombinations = optionsCombinations(rest)
-    return restCombinations
-        .flatMap(restCombination =>
-            first.options.map(firstOption => ([{ id: first.id, option: firstOption }, ...restCombination])
-            )
-        )
+
+    return restCombinations.flatMap(restCombination => {
+        return firstOptions.map(firstOption => ([...firstOption, ...restCombination]))
+    })
+
 }
