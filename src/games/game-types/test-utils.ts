@@ -1,20 +1,27 @@
 import { assert, expect } from "vitest"
 import { GenericGame } from "../game"
 import { Strategy } from "./utils"
-import { otherPlayer, Player } from "../arena"
+import { GenericCompiledArena, otherPlayer, Player } from "../arena"
 import fs from 'fs';
 import path from 'path';
 
-export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strategy, player: Player) => {
+const fillEmptyChoicesArbitrarily = <T>(arena: GenericCompiledArena<T>, strategy: Strategy): Strategy => {
     const strat = new Map(strategy)
-    const otherPlayerVertices = game.arena.compiledData[`v${otherPlayer(player)}`]
-    const playerVertices = game.arena.compiledData[`v${player}`]
 
     // make sure all of the vertices has a strategy
-    playerVertices.forEach(v => {
-        if (!strat.has(v.id)) strat.set(v.id, game.arena.getNeighbors(v.id)[0])
+    arena.vertices.forEach(v => {
+        if (!strat.has(v.id)) strat.set(v.id, arena.getNeighbors(v.id)[0])
     })
 
+    return strat
+}
+
+export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strategy, player: Player) => {
+    const otherPlayerVertices = game.arena.compiledData[`v${otherPlayer(player)}`]
+
+    // make sure all of the vertices has a strategy
+
+    const strat = fillEmptyChoicesArbitrarily(game.arena, strategy)
 
     const otherPlayerVerticesWithChoices = otherPlayerVertices.filter(v => game.arena.getNeighbors(v.id).length > 1)
 

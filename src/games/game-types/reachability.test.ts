@@ -23,7 +23,7 @@ describe('Reachability', () => {
         const game = createReachabilityGame(arena) as unknown as ReachabilityGame
 
         const strategy = solveReachabilityGame(game)
-        assertWinningStrategy(game, strategy, 1)
+        assertWinningStrategy(game, strategy, 0)
     })
 })
 
