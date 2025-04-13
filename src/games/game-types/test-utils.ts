@@ -6,7 +6,15 @@ import fs from 'fs';
 import path from 'path';
 
 export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strategy, player: Player) => {
+    const strat = new Map(strategy)
     const otherPlayerVertices = game.arena.compiledData[`v${otherPlayer(player)}`]
+    const playerVertices = game.arena.compiledData[`v${player}`]
+
+    // make sure all of the vertices has a strategy
+    playerVertices.forEach(v => {
+        if (!strat.has(v.id)) strat.set(v.id, game.arena.getNeighbors(v.id)[0])
+    })
+
 
     const otherPlayerVerticesWithChoices = otherPlayerVertices.filter(v => game.arena.getNeighbors(v.id).length > 1)
 
@@ -17,7 +25,7 @@ export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strateg
         // each chosen vertex's switch options
         const optionsToCombine = choices.map(i => {
             const currentVertex = otherPlayerVerticesWithChoices[i].id
-            const currentChoice = strategy.get(currentVertex)
+            const currentChoice = strat.get(currentVertex)
             // cannot be switched to the same choice
             return { id: currentVertex, options: game.arena.getNeighbors(currentVertex).filter(n => n !== currentChoice) }
         })
@@ -27,7 +35,7 @@ export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strateg
 
         // add each combination to the strategies
         waysToCombineOptions.forEach(optionCombination => {
-            const newStrat = new Map(strategy)
+            const newStrat = new Map(strat)
             optionCombination.forEach(option => {
                 newStrat.set(option.id, option.option)
             })
