@@ -1,4 +1,4 @@
-import { Arena, Edges, NeighborsOf, Player, Vertex } from "./arena";
+import { Arena, Edges, NeighborsOf, Player, SpecificVertexOf, Vertex } from "./arena";
 
 export type History<V extends readonly Vertex[]> = V[number][]
 
@@ -28,7 +28,7 @@ export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges 
         return this.currentState.player
     }
 
-    play<CurV extends C>(choice: NeighborsOf<CurV['id'], V, E>[number]) {
+    play<CurV extends C, Choice extends NeighborsOf<CurV['id'], V, E>[number]>(choice: Choice) {
         const newState = this.arena.getNeighbors(this.currentState.id).find(n => n === choice)
         if (!newState) {
             throw new Error('cannot play this choice')
@@ -39,7 +39,7 @@ export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges 
         clone.currentState = newStateVertex as C
         clone.history.push(clone.currentState)
 
-        return clone as unknown as Game<Data, V, E, typeof newStateVertex>
+        return clone as unknown as Game<Data, V, E, SpecificVertexOf<Choice, V>>
     }
 
     getCurrentWinner() {

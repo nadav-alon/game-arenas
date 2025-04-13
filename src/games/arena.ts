@@ -223,7 +223,7 @@ export type NeighborsOf<
   : never;
 
 
-type SpecificVertexOf<
+export type SpecificVertexOf<
   V extends string,
   Vertices extends readonly Vertex[]> =
   IsTuple<Vertices> extends true ?
