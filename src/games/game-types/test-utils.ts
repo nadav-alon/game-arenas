@@ -2,9 +2,10 @@ import { assert, expect } from "vitest"
 import { GenericGame } from "../game"
 import { Strategy } from "./utils"
 import { otherPlayer, Player } from "../arena"
+import fs from 'fs';
+import path from 'path';
 
 export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strategy, player: Player) => {
-    // TODO: generate all possible strategies for the opposing player
     const otherPlayerVertices = game.arena.compiledData[`v${otherPlayer(player)}`]
 
     const otherPlayerVerticesWithChoices = otherPlayerVertices.filter(v => game.arena.getNeighbors(v.id).length > 1)
@@ -37,7 +38,26 @@ export const assertWinningStrategy = <T>(game: GenericGame<T>, strategy: Strateg
 
     strategies.forEach(strat => {
         const gameAfterPlayingStrategy = playGameAccordingToStrategy(game, strat)
-        expect(gameAfterPlayingStrategy.getCurrentWinner(), `Strategy ${strat} is not winning`).toBe(player)
+        const winner = gameAfterPlayingStrategy.getCurrentWinner()
+        try {
+            expect(winner, `Strategy ${strat} is not winning`).toBe(player)
+        } catch (error) {
+            const dir = path.resolve('failed-cases');
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+
+            fs.writeFileSync(
+                path.join(dir, `failing-strat.json`),
+                JSON.stringify({
+                    game,
+                    shouldWin: player,
+                    actualWinner: winner,
+                    strat: Object.fromEntries(strat),
+                    error: error instanceof Error ? error.message : String(error),
+                }, null, 2)
+            );
+
+            throw error; // rethrow to let Vitest know it's a legit failure
+        }
     })
 }
 
@@ -69,6 +89,8 @@ function* bitIndexGenerator(n: number): Generator<number[]> {
 }
 export const optionsCombinations = <I, T>(optionsToCombine: { id: I; options: T[] }[]): { id: I, option: T }[][] => {
     const [first, ...rest] = optionsToCombine
+    if (!first) return []
+
     const firstOptions = first.options.map(option => ([{ id: first.id, option }]))
     if (rest.length === 0) return firstOptions
 
