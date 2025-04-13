@@ -7,7 +7,7 @@ export type GenericGame<Data> = Game<Data, Vertex<Data>[], Edges>
 export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = [], C extends V[number] = V[0]> {
     arena: Arena<Data, V, E, true>
     currentState: C
-    winCondition: (this: typeof this, play: History<V>) => Player
+    winCondition: <G extends GenericGame<Data>>(this: G, play: History<V>) => Player
     history: History<V>
 
     constructor(arena: typeof this.arena, initialState: V[number]['id']) {
@@ -43,6 +43,6 @@ export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges 
     }
 
     getCurrentWinner() {
-        return this.winCondition(this.history)
+        return (this as unknown as GenericGame<Data>).winCondition(this.history)
     }
 }

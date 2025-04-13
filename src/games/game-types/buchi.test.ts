@@ -1,7 +1,20 @@
 
-import { describe, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { Arena } from "../arena";
+import { BuchiData, createBuchiGame } from "./buchi";
 
 describe('Buchi', () => {
-    it.todo('Plays correctly', () => { })
+    it('Plays correctly', () => {
+        const arena = new Arena<BuchiData>().addP0('1', { accepting: false }).addP1('2', { accepting: true }).addEdge('1', '2').addEdge('2', '1')
+
+        const game = createBuchiGame(arena)
+        expect(game.getCurrentWinner()).toBe(1)
+
+        const game_ = game.play('2')
+        expectTypeOf(game_.play).parameter(0).toBeNever()
+        expect(game_.currentState).toMatchObject({ player: 1, id: '2', data: { accepting: true } })
+
+        expect(game_.getCurrentWinner()).toBe(0)
+    })
     it.todo('Correct winning strategy', () => { })
 })

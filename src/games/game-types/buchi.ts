@@ -1,4 +1,4 @@
-import { GenericArena } from "../arena";
+import { Arena, Edges, Vertex } from "../arena";
 import { Game, GenericGame } from "../game";
 import { ReachabilityData } from "./reachability";
 import { generateStrategyFromHistory, Strategy, strategyLoopStates } from "./utils";
@@ -7,8 +7,8 @@ import { generateStrategyFromHistory, Strategy, strategyLoopStates } from "./uti
 export type BuchiData = ReachabilityData
 export type BuchiGame = GenericGame<BuchiData>
 
-export const createBuchiGame = (
-    a: GenericArena<BuchiData>) => {
+export const createBuchiGame = <V extends Vertex<BuchiData>[], E extends Edges>(
+    a: Arena<BuchiData, V, E>) => {
 
     const arena = a.compile()
     const { vertices: v } = arena

@@ -11,7 +11,7 @@ describe('Game', () => {
         expectTypeOf(game.play).parameter(0).toEqualTypeOf<'2'>()
 
         const game_ = game.play('2')
-        expectTypeOf(game_.play).parameter(0).toBeNever()
+        expectTypeOf(game_.play).parameter(0).toEqualTypeOf<'1'>()
         expect(game_.currentState).toMatchObject({ player: 1, id: '2', data: { accepting: true } })
 
         expect(game_.history).toMatchObject([{ player: 0, id: '1', data: { accepting: false } }, { player: 1, id: '2', data: { accepting: true } }])
