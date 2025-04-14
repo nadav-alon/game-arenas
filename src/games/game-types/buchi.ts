@@ -1,7 +1,7 @@
 import { Arena, Edges, Vertex } from "../arena";
 import { Game, GenericGame } from "../game";
 import { ReachabilityData } from "./reachability";
-import { generateStrategyFromHistory, Strategy, strategyLoopStates } from "./utils";
+import { generateStrategyFromHistory, INCOMPLETE_STRATEGY_ERROR, Strategy, strategyLoopStates } from "./utils";
 
 
 export type BuchiData = ReachabilityData
@@ -15,9 +15,15 @@ export const createBuchiGame = <V extends Vertex<BuchiData>[], E extends Edges>(
 
     function winCondition<G extends BuchiGame>(this: G, h: typeof this.history) {
         const strategy = generateStrategyFromHistory(h)
-        const loop = strategyLoopStates<ReachabilityData, G>(this, strategy)
-
-        return loop.some(s => s.data?.accepting) ? 0 : 1
+        try {
+            const loop = strategyLoopStates<ReachabilityData, G>(this, strategy)
+            return loop.some(s => s.data?.accepting) ? 0 : 1
+        } catch (e) {
+            if (e instanceof INCOMPLETE_STRATEGY_ERROR) {
+                return 1
+            }
+            throw e
+        }
     }
 
     const game = new Game(arena, v[0].id)

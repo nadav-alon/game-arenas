@@ -7,10 +7,16 @@ export const generateStrategyFromHistory = <V extends Vertex<unknown>[]>(h: Hist
     const strategy: Strategy = new Map()
 
     h.slice(0, h.length).forEach((s, i) => {
-        strategy.set(s.id, h[i + 1].id)
+        if (h[i + 1]?.id) strategy.set(s.id, h[i + 1].id)
     })
 
     return strategy
+}
+
+export class INCOMPLETE_STRATEGY_ERROR extends Error {
+    constructor() {
+        super('Incomplete strategy')
+    }
 }
 
 export const nextStateByStrategy = <Data>(game: GenericGame<Data>, strategy: Strategy, currentState: Vertex) => {
@@ -18,7 +24,7 @@ export const nextStateByStrategy = <Data>(game: GenericGame<Data>, strategy: Str
     const nextState = strategy.get(currentState.id)
 
     if (!nextState)
-        throw new Error('Incomplete strategy')
+        throw new INCOMPLETE_STRATEGY_ERROR()
 
     return game.arena.get(nextState)
 }
