@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { Arena, GenericArena, GenericCompiledArena, Vertex, VertexId } from './arena'
+import { Arena, GenericArena, GenericCompiledArena, Player, Vertex, VertexId } from './arena'
 
 describe('Arena', () => {
     describe('Build Arena', () => {
@@ -63,11 +63,48 @@ describe('Arena', () => {
 
             expect(subArena.edges).toEqual(expect.arrayContaining([['0', '1'], ['1', '0']]))
             expect(subArena.edges.length).toBe(2)
-
-
         })
 
+        it('Validate', () => {
+            let arena = new Arena().addP0('1') as unknown as GenericArena
+
+            expect(() => arena.validate(), 'Invalid arena should throw when validated').toThrow()
+            arena = arena.addEdge('1', '1')
+            expect(() => arena.validate(), 'Valid arena should not throw when validated').not.toThrow()
+        })
+
+        describe('Controlled Predescessor', () => {
+            it('Circle Graph', () => {
+                const NUMBER = 10
+
+                let arena = new Arena() as GenericArena
+
+                const nodes = Array.from({ length: NUMBER }).map((_, i) => i.toString())
+
+                nodes.forEach((node, index) => {
+                    const prevNode = (index - 1).toString()
+                    arena = arena.add({ id: index.toString(), player: index % 2 as Player })
+
+                    if (index > 0)
+                        arena = arena.addEdge(prevNode, node)
+                })
+                arena = arena.addEdge((NUMBER - 1).toString(), '0')
+
+                nodes.forEach((node, index) => {
+                    const prevNode = (index - 1).toString()
+
+                    if (index > 0)
+                        expect(arena.controlledPredecessor(0, [node])).toMatchObject([prevNode])
+                    else
+                        expect(arena.controlledPredecessor(0, [node]), `${node}'s predecessor does not match`).toMatchObject(['9'])
+
+                })
+            })
+            it.todo('Complex Example')
+        })
+        it.todo('Attractor')
     })
+
     describe('Type Tests', () => {
         describe('Constant', () => {
             describe('Building', () => {
@@ -77,7 +114,7 @@ describe('Arena', () => {
                 })
 
                 it('Simple Arena', () => {
-                    const simpleArena = new Arena().addP0('a').addP1('b').compile()
+                    const simpleArena = new Arena().addP0('a').addP1('b')
                     expectTypeOf(simpleArena).toEqualTypeOf<Arena<unknown, [{
                         id: "a";
                         player: 0;
@@ -86,11 +123,11 @@ describe('Arena', () => {
                         id: "b";
                         player: 1;
                         data: unknown,
-                    }], [], true>>()
+                    }], [], false>>()
                 })
 
                 it('Arena With Edges', () => {
-                    const arenaWithEdges = new Arena().addP0('a').addP1('b').addEdge('a', 'b').addEdge('a', 'a').compile()
+                    const arenaWithEdges = new Arena().addP0('a').addP1('b').addEdge('a', 'b').addEdge('a', 'a')
 
                     expectTypeOf(arenaWithEdges).toEqualTypeOf<Arena<unknown, [{
                         id: "a";
@@ -100,7 +137,7 @@ describe('Arena', () => {
                         id: "b";
                         player: 1;
                         data: unknown,
-                    }], [['a', 'b'], ['a', 'a']], true>>()
+                    }], [['a', 'b'], ['a', 'a']], false>>()
                 })
             })
             describe('Get', () => {
@@ -111,13 +148,13 @@ describe('Arena', () => {
                     })
 
                     it('Non Empty Arena', () => {
-                        const arena = new Arena().addP0('a').addP1('b').compile()
+                        const arena = new Arena().addP0('a').addP1('b')
                         expectTypeOf(arena.get).parameter(0).toEqualTypeOf<'a' | 'b'>()
                     })
                 })
 
                 it('Result Type', () => {
-                    const arena = new Arena().addP0('a').addP0('b').addEdge('a', 'b').compile()
+                    const arena = new Arena().addP0('a').addP0('b').addEdge('a', 'b')
 
                     expectTypeOf(arena.get('a')).toEqualTypeOf<{ id: 'a', player: 0, data: unknown }>()
                 })
@@ -125,18 +162,18 @@ describe('Arena', () => {
             describe('Neighbors', () => {
                 describe('Parameters Types', () => {
                     it('Empty Arena', () => {
-                        const emptyArena = new Arena().compile()
+                        const emptyArena = new Arena()
                         expectTypeOf(emptyArena.getNeighbors).parameter(0).toBeNever()
                     })
 
                     it('Non Empty Arena', () => {
-                        const arena = new Arena().addP0('a').addP1('b').compile()
+                        const arena = new Arena().addP0('a').addP1('b')
                         expectTypeOf(arena.getNeighbors).parameter(0).toEqualTypeOf<'a' | 'b'>()
                     })
                 })
 
                 it('Result Type', () => {
-                    const arena = new Arena().addP0('a').addP0('b').addEdge('a', 'b').addEdge('a', 'a').compile()
+                    const arena = new Arena().addP0('a').addP0('b').addEdge('a', 'b').addEdge('a', 'a')
 
                     expectTypeOf(arena.getNeighbors('a')).toEqualTypeOf<["b", 'a']>()
                 })
@@ -195,7 +232,7 @@ describe('Arena', () => {
         describe('Variable', () => {
             it('Building', () => {
                 let arena: GenericArena = new Arena()
-                arena = arena.addP0('0').addP1('1').compile()
+                arena = arena.addP0('0').addP1('1')
 
                 expectTypeOf(arena.add).returns.toEqualTypeOf<GenericArena>()
                 expectTypeOf(arena.addEdge).returns.toEqualTypeOf<GenericArena>()
@@ -203,13 +240,13 @@ describe('Arena', () => {
             describe('Get', () => {
                 it('Parameters Types', () => {
                     let arena: GenericArena = new Arena()
-                    arena = arena.addP0('0').addP1('1').compile()
+                    arena = arena.addP0('0').addP1('1')
 
                     expectTypeOf(arena.get).parameter(0).toEqualTypeOf<VertexId>()
                 })
                 it('Return Type', () => {
                     let arena: GenericArena = new Arena()
-                    arena = arena.addP0('0').addP1('1').compile()
+                    arena = arena.addP0('0').addP1('1')
 
                     expectTypeOf(arena.get).returns.toEqualTypeOf<Vertex<unknown>>()
                 })
@@ -218,15 +255,15 @@ describe('Arena', () => {
             describe('Neighbors', () => {
                 it('Parameters Types', () => {
                     let arena: GenericArena = new Arena()
-                    arena = arena.addP0('0').addP1('1').compile()
+                    arena = arena.addP0('0').addP1('1')
 
                     expectTypeOf(arena.getNeighbors).parameter(0).toEqualTypeOf<VertexId>()
                 })
                 it('Return Type', () => {
                     let arena: GenericArena = new Arena()
-                    arena = arena.addP0('0').addP1('1').compile()
+                    arena = arena.addP0('0').addP1('1')
 
-                    expectTypeOf(arena.getNeighbors).returns.toEqualTypeOf<Vertex<unknown>[]>()
+                    expectTypeOf(arena.getNeighbors).returns.toEqualTypeOf<VertexId[]>()
                 })
 
             })
@@ -234,14 +271,14 @@ describe('Arena', () => {
 
                 it('Parameter Types', () => {
                     let arena: GenericArena = new Arena()
-                    arena = arena.addP0('0').addP1('1').compile()
+                    arena = arena.addP0('0').addP1('1')
 
                     expectTypeOf(arena.subArena).parameter(0).toEqualTypeOf<readonly VertexId[]>()
                 })
 
                 it('Return Types', () => {
                     let arena: GenericArena = new Arena()
-                    arena = arena.addP0('0').addP1('1').compile()
+                    arena = arena.addP0('0').addP1('1').addEdge('0', '1').addEdge('1', '0').compile()
 
                     expectTypeOf(arena.subArena).returns.toEqualTypeOf<GenericCompiledArena>()
                 })

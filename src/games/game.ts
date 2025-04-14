@@ -1,43 +1,48 @@
-import { GenericCompiledArena, NeighborsOf, Player, Vertex } from "./arena";
+import { Arena, Edges, NeighborsOf, Player, SpecificVertexOf, Vertex } from "./arena";
 
-type WinCondition<V extends readonly Vertex[]> = (play: V[number][]) => Player
+export type History<V extends readonly Vertex[]> = V[number][]
 
-export class Game<Data, V extends readonly Vertex<Data>[] = []> {
-    arena: GenericCompiledArena<Data>
-    currentState: V[number];
-    winCondition: WinCondition<V>;
-    history: V[number][]
+export type GenericGame<Data> = Game<Data, Vertex<Data>[], Edges>
 
-    constructor(arena: typeof this.arena, initialState: V[number]['id'], winCondition: WinCondition<V>) {
+export class Game<Data, V extends readonly Vertex<Data>[] = [], E extends Edges = [], C extends V[number] = V[0]> {
+    arena: Arena<Data, V, E, true>
+    currentState: C
+    winCondition: <G extends GenericGame<Data>>(this: G, play: History<V>) => Player
+    history: History<V>
+
+    constructor(arena: typeof this.arena, initialState: V[number]['id']) {
         this.arena = arena
-        this.currentState = this.arena.get(initialState)
-        this.winCondition = winCondition
+        this.currentState = this.arena.get(initialState) as C
+        this.winCondition = () => { throw Error('unimplemented') }
         this.history = [this.currentState]
+    }
+
+    clone() {
+        const clone = new Game<Data, V, E, typeof this.currentState>(this.arena, this.currentState.id)
+        clone.winCondition = this.winCondition as typeof clone.winCondition
+        clone.history = [...this.history]
+        return clone
     }
 
     getCurrentPlayer(): Player {
         return this.currentState.player
     }
 
-    play<CurV extends typeof this.currentState.id>(choice: NeighborsOf<CurV, typeof this.arena.vertices, typeof this.arena.edges>[number]) {
+    play<CurV extends C, Choice extends NeighborsOf<CurV['id'], V, E>[number]>(choice: Choice) {
         const newState = this.arena.getNeighbors(this.currentState.id).find(n => n === choice)
         if (!newState) {
             throw new Error('cannot play this choice')
         }
 
-        this.currentState = newState
-        this.history.push(this.currentState)
+        const newStateVertex = this.arena.get(newState)
+        const clone = this.clone()
+        clone.currentState = newStateVertex as C
+        clone.history.push(clone.currentState)
+
+        return clone as unknown as Game<Data, V, E, SpecificVertexOf<Choice, V>>
     }
 
     getCurrentWinner() {
-        return this.winCondition(this.history)
+        return (this as unknown as GenericGame<Data>).winCondition(this.history)
     }
 }
-
-
-// const arena = new Arena().addP0('1').addP1('2').addEdge("1","2").compile()
-// const game = new Game(arena, '1', (p)=>p.find(v=>v.v === '1') ? 0 : 1)
-
-// game.play<typeof game.currentState.v>("2")
-// game.getCurrentWinner()
-// // game.play<typeof game.currentState.v>()

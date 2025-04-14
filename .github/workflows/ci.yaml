@@ -43,3 +43,10 @@ jobs:
         run: pnpm install
       - name: Test
         run: pnpm test
+
+      - name: Upload failed test cases (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-test-cases
+          path: failed-cases/
